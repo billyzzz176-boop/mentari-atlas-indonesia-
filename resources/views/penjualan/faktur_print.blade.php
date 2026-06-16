@@ -75,11 +75,14 @@
         }
 
         .invoice-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
             text-align: right;
         }
 
         .invoice-details h2 { 
-            margin: 0 0 5px 0; 
+            margin: 0 12px 5px 0; 
             font-size: 32px; 
             color: var(--slate-900);
             font-weight: 800;

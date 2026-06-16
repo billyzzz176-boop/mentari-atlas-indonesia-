@@ -1,1 +1,0 @@
-<?php $z = new ZipArchive; if ($z->open("PSI PT. Mentari Prima Semesta.docx") === TRUE) { $xml = $z->getFromName("word/document.xml"); $z->close(); $dom = new DOMDocument; $dom->loadXML($xml); foreach ($dom->getElementsByTagName("t") as $n) echo $n->nodeValue . " "; } else echo "FAIL";
