@@ -53,11 +53,30 @@
         }
         .input-icon {
             position: absolute;
-            top: 50%;
+            top: 1rem; /* Adjust based on input padding-top */
             left: 1rem;
-            transform: translateY(-50%);
+            /* remove transform: translateY(-50%) to prevent shifting when error messages appear */
             color: #94a3b8;
             z-index: 10;
+            line-height: 1; /* Ensure icon uses its natural height */
+            height: 1.5rem; /* Match input's line-height */
+            display: flex;
+            align-items: center;
+        }
+        .password-toggle-icon {
+            position: absolute;
+            top: 1rem; /* Align vertically with input-icon */
+            right: 1rem; /* Position on the right */
+            color: #94a3b8;
+            z-index: 10;
+            cursor: pointer;
+            line-height: 1;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .password-toggle-icon:hover {
+            color: #64748b;
         }
 
         /* Card Layout */
@@ -166,6 +185,7 @@
                     <div class="mb-4 position-relative">
                         <i class="fas fa-lock input-icon"></i>
                         <input id="password" type="password" class="form-control form-control-custom w-100 @error('password') is-invalid @enderror" name="password" required autocomplete="current-password" placeholder="Kata Sandi">
+                        <i class="fas fa-eye password-toggle-icon" id="togglePassword"></i> {{-- Eye icon for password toggle --}}
                         @error('password')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
@@ -202,5 +222,18 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function (e) {
+            // toggle the type attribute
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            // toggle the eye / eye-slash icon
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    </script>
 </body>
 </html>
