@@ -189,6 +189,8 @@
                 @if(count($utangs) > 0)
                 <tfoot style="background-color: #e2e8f0; border-top: 2px solid #cbd5e1;">
                     <tr class="tfoot-grand-total">
+                        {{-- GRAND TOTAL MOBILE LABEL --}}
+                        <td colspan="10" class="text-center fw-bold text-slate-dark py-2 d-block d-lg-none" style="background-color: #e2e8f0; border-radius: 0.5rem 0.5rem 0 0; margin-bottom: 0.5rem;">GRAND TOTAL KESELURUHAN</td>
                         <td colspan="3" class="text-end fw-bold text-slate-dark py-3 d-none d-lg-table-cell">GRAND TOTAL KESELURUHAN:</td>
                         <td class="text-end fw-bold text-slate-dark font-monospace-custom py-3" data-label="Grand Utang Awal" style="white-space: nowrap;">
                             Rp {{ number_format($grandTotalUtangAwal, 0, ',', '.') }}

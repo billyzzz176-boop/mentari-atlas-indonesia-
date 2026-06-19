@@ -282,7 +282,9 @@
                                         <i class="fas fa-image text-info me-1"></i> Lihat Struk
                                     </a>
                                 @else
-                                    <span class="text-muted fst-italic" style="font-size: 0.7rem;"><i class="fas fa-exclamation-triangle text-warning me-1"></i> Tanpa Bukti Lampiran</span>
+                                    <span class="badge badge-warning-soft px-2 py-1 rounded-pill" style="font-size: 0.65rem;">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> Tanpa Bukti Lampiran
+                                    </span>
                                 @endif
                             </td>
                         </tr>
