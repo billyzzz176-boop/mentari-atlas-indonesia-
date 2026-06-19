@@ -250,21 +250,21 @@
                         @php $noKas = 1; @endphp
                         @forelse($utang->pembayarans->sortBy('created_at') as $bayar)
                         <tr>
-                            <td class="ps-4 text-center fw-bold text-slate-muted">{{ $noKas++ }}</td>
-                            <td>
+                            <td data-label="No" class="ps-4 text-center fw-bold text-slate-muted">{{ $noKas++ }}</td>
+                            <td data-label="Waktu Input">
                                 <span class="fw-bold text-slate-dark d-block mb-1">{{ \Carbon\Carbon::parse($bayar->tanggal_bayar)->format('d M Y') }}</span>
                                 <small class="text-slate-muted"><i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($bayar->tanggal_bayar)->format('H:i') }} WIB</small>
                             </td>
-                            <td class="text-end font-monospace-custom fs-6 text-success">
+                            <td data-label="Nominal Uang Keluar" class="text-end font-monospace-custom fs-6 text-success">
                                 Rp {{ number_format($bayar->jumlah_bayar, 0, ',', '.') }}
                             </td>
-                            <td class="text-center">
+                            <td data-label="Metode Bayar" class="text-center">
                                 <span class="badge badge-secondary-soft rounded-pill px-3 py-1.5"><i class="fas fa-wallet me-1"></i> {{ $bayar->metode_pembayaran ?? 'Tidak dicatat' }}</span>
                             </td>
-                            <td>
+                            <td data-label="Eksekutor (Admin)">
                                 <span class="fw-semibold text-slate-dark d-block"><i class="fas fa-user-circle text-emerald-custom me-1"></i> {{ $bayar->pembayar->name ?? 'Sistem' }}</span>
                             </td>
-                            <td class="pe-4">
+                            <td data-label="Catatan & Bukti" class="pe-4">
                                 <div class="text-slate-muted fst-italic mb-2" style="font-size: 0.8rem;">"{{ $bayar->keterangan ?? 'Tidak ada catatan' }}"</div>
                                 @if($bayar->bukti_bayar)
                                     <a href="{{ asset('storage/' . $bayar->bukti_bayar) }}" target="_blank" class="btn btn-sm btn-light border shadow-sm rounded-pill text-slate-dark" style="font-size: 0.75rem;">
@@ -307,7 +307,21 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
+                <style>
+                    @media (max-width: 991.98px) {
+                        #tabelDN, #tabelDN tbody, #tabelDN tr, #tabelDN td { display: block; width: 100% !important; min-width: auto !important; }
+                        #tabelDN thead { display: none; }
+                        #tabelDN tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+                        #tabelDN td { border: none !important; padding: 0.5rem 0 !important; text-align: right !important; display: flex; justify-content: space-between; align-items: center; }
+                        #tabelDN td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-right: 1rem; text-align: left; }
+                        #tabelDN td:first-child:not([colspan]) { border-bottom: 1px dashed #e2e8f0 !important; padding-bottom: 0.75rem !important; margin-bottom: 0.5rem; }
+                        #tabelDN td:last-child:not([colspan]) { border-top: 1px dashed #e2e8f0 !important; margin-top: 0.5rem; padding-top: 1rem !important; justify-content: center; }
+                        #tabelDN td:last-child:not([colspan])::before { display: none; }
+                        #tabelDN tfoot { display: block; width: 100%; margin-top: 1rem; }
+                        #tabelDN tfoot tr { background: #e2e8f0; border-radius: 0.5rem; padding: 1rem; }
+                    }
+                </style>
+                <table id="tabelDN" class="table table-hover align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
                     <thead class="table-custom-header">
                         <tr>
                             <th class="ps-4 text-center" width="5%">No</th>
@@ -322,20 +336,20 @@
                         {{-- PERBAIKAN: Langsung membaca dari tabel khusus CreditNote ($debitNotes) --}}
                         @forelse($debitNotes as $dn)
                         <tr>
-                            <td class="ps-4 text-center fw-bold text-slate-muted">{{ $noDN++ }}</td>
-                            <td>
+                            <td data-label="No" class="ps-4 text-center fw-bold text-slate-muted">{{ $noDN++ }}</td>
+                            <td data-label="Waktu Eksekusi">
                                 <span class="fw-bold text-slate-dark d-block mb-1">{{ \Carbon\Carbon::parse($dn->created_at)->format('d M Y') }}</span>
                                 <small class="text-slate-muted"><i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($dn->created_at)->format('H:i') }} WIB</small>
                             </td>
-                            <td class="text-center">
+                            <td data-label="Label Pemotongan" class="text-center">
                                 <span class="badge badge-warning-soft text-dark fw-bold rounded-pill px-3 py-1.5" style="color: #92400e !important; border-color: #fcd34d;">
                                     <i class="fas fa-cut me-1"></i> {{ $dn->nomor_cn }}
                                 </span>
                             </td>
-                            <td class="text-end fw-bold text-warning font-monospace-custom" style="font-size: 0.95rem;">
+                            <td data-label="Nominal Potongan" class="text-end fw-bold text-warning font-monospace-custom" style="font-size: 0.95rem;">
                                 - Rp {{ number_format($dn->nominal, 0, ',', '.') }}
                             </td>
-                            <td class="text-slate-dark fw-medium pe-4">
+                            <td data-label="Alasan Pemotongan Harga" class="text-slate-dark fw-medium pe-4">
                                 {{ $dn->keterangan ?? '-' }}
                             </td>
                         </tr>
