@@ -1,0 +1,22 @@
+{
+  "name": "Mentari Atlas Indonesia",
+  "short_name": "Mentari Atlas",
+  "description": "Sistem Informasi Manajemen Mentari Atlas Indonesia",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/mentari-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/mentari-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

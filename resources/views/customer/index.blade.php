@@ -82,7 +82,7 @@
 
     {{-- TABEL TEMA PREMIUM --}}
     <div class="table-wrapper-mentari">
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-lg-block">
             <table class="table table-mentari table-mentari-compact align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
                 <thead>
                     <tr>
@@ -163,6 +163,58 @@
             </table>
         </div>
     </div>
+
+                {{-- MOBILE CARDS --}}
+                <div class="d-lg-none p-3" style="background-color: var(--bg-page);">
+                    @forelse($customers as $c)
+                    <div class="card card-custom mb-3" style="border-radius: 16px;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-emerald-custom fw-bold px-2 py-1" style="border-radius: 8px;">{{ $c->id_cust }}</span>
+                                <div>
+                                    @if(($c->tingkat_customer ?? 'Bronze') === 'Gold')
+                                        <span class="badge badge-gold rounded-pill px-2 py-1 shadow-sm" style="font-size:0.6rem;"><i class="fas fa-crown me-1"></i>GOLD</span>
+                                    @elseif(($c->tingkat_customer ?? 'Bronze') === 'Silver')
+                                        <span class="badge badge-silver rounded-pill px-2 py-1 shadow-sm" style="font-size:0.6rem;"><i class="fas fa-medal me-1 text-secondary"></i>SILVER</span>
+                                    @else
+                                        <span class="badge badge-bronze rounded-pill px-2 py-1 shadow-sm" style="font-size:0.6rem;"><i class="fas fa-award me-1"></i>BRONZE</span>
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            <h6 class="fw-bold text-slate-dark mb-1" style="font-size: 1.05rem;">{{ $c->nama_customer }}</h6>
+                            <div class="text-muted mb-3" style="font-size: 0.8rem;"><i class="fas fa-phone-alt me-1"></i>{{ $c->no_telp ?: '-' }}</div>
+                            
+                            <div class="d-flex justify-content-between mb-3 bg-light p-2" style="border-radius: 12px; border: 1px solid var(--border-panel);">
+                                <div><small class="text-muted d-block" style="font-size:0.65rem;">Plafon / Limit</small><span class="fw-bold text-danger" style="font-size:0.85rem;">Rp {{ number_format($c->plafon, 0, ',', '.') }}</span></div>
+                                <div class="text-end"><small class="text-muted d-block" style="font-size:0.65rem;">Termin</small><span class="badge bg-warning text-dark px-2 py-1">{{ $c->tempo_hari ?? 30 }} Hari</span></div>
+                            </div>
+                            
+                            <form action="{{ route('customer.updateTier', $c->id) }}" method="POST" class="mb-3 d-flex gap-2">
+                                @csrf
+                                <select name="tingkat_customer" class="form-select form-select-sm rounded select-tier-custom shadow-none" required>
+                                    <option value="Bronze" {{ ($c->tingkat_customer ?? 'Bronze') == 'Bronze' ? 'selected' : '' }}>Tier Bronze</option>
+                                    <option value="Silver" {{ ($c->tingkat_customer ?? 'Bronze') == 'Silver' ? 'selected' : '' }}>Tier Silver</option>
+                                    <option value="Gold" {{ ($c->tingkat_customer ?? 'Bronze') == 'Gold' ? 'selected' : '' }}>Tier Gold</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-emerald-custom flex-shrink-0" style="border-radius: 8px;"><i class="fas fa-check"></i></button>
+                            </form>
+                            
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-primary-soft flex-fill fw-bold py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalDetail{{ $c->id }}"><i class="fas fa-eye me-1"></i>Detail</button>
+                                <button type="button" class="btn btn-sm btn-warning-soft flex-fill fw-bold py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $c->id }}"><i class="fas fa-pen me-1"></i>Edit</button>
+                                <form action="{{ route('customer.destroy', $c->id) }}" method="POST" class="m-0 flex-fill">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger-soft w-100 fw-bold py-2" style="border-radius: 10px;" onclick="return confirm('Hapus customer ini?')"><i class="fas fa-trash-alt"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-5 text-muted bg-white shadow-sm" style="border-radius: 16px;">Belum ada data customer.</div>
+                    @endforelse
+                </div>
+
 </div>
 
 {{-- =========================================================================
@@ -184,12 +236,13 @@
                             <div class="mb-3"><span class="small text-muted d-block">Kode Customer</span><span class="fw-bold">{{ $c->id_cust }}</span></div>
                             <div class="mb-3"><span class="small text-muted d-block">Nomor Telepon</span><span class="fw-bold">{{ $c->no_telp ?: '-' }}</span></div>
                             <div class="mb-3"><span class="small text-muted d-block">Plafon Kredit</span><span class="fw-bold text-danger">Rp {{ number_format($c->plafon, 0, ',', '.') }}</span></div>
-                            <div class="mb-3"><span class="small text-muted d-block">Termin Jatuh Tempo</span><span class="fw-bold text-danger">{{ $c->tempo_hari ?? 30 }} Hari</span></div>
-                            <div class="mb-3"><span class="small text-muted d-block">Alamat Lengkap</span><span class="fw-bold">{{ $c->alamat ?: '-' }}</span></div>
+                            <div class="mb-3"><span class="small text-muted d-block">Sisa Plafon Kredit (Sisa Limit)</span><span class="fw-bold text-success">Rp {{ number_format($c->sisa_plafon, 0, ',', '.') }}</span></div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3"><span class="small text-muted d-block">Nomor KTP</span><span class="fw-bold">{{ $c->ktp ?: '-' }}</span></div>
                             <div class="mb-3"><span class="small text-muted d-block">Nomor NPWP</span><span class="fw-bold">{{ $c->npwp ?: '-' }}</span></div>
+                            <div class="mb-3"><span class="small text-muted d-block">Termin Jatuh Tempo</span><span class="fw-bold text-danger">{{ $c->tempo_hari ?? 30 }} Hari</span></div>
+                            <div class="mb-3"><span class="small text-muted d-block">Alamat Lengkap</span><span class="fw-bold">{{ $c->alamat ?: '-' }}</span></div>
                         </div>
                         
                         <div class="col-12 mt-2 pt-3 border-top">
@@ -198,7 +251,7 @@
                                 <div class="col-md-4 text-center">
                                     <span class="small text-muted d-block mb-2">Foto KTP</span>
                                     @if($c->foto_ktp)
-                                        <a href="{{ asset('storage/' . $c->foto_ktp) }}" target="_blank"><img src="{{ asset('storage/' . $c->foto_ktp) }}" class="img-preview-box shadow-sm"></a>
+                                        <a href="{{ route('berkas', $c->foto_ktp) }}" target="_blank"><img src="{{ route('berkas', $c->foto_ktp) }}" class="img-preview-box shadow-sm"></a>
                                     @else
                                         <div class="img-preview-box d-flex align-items-center justify-content-center text-muted"><i class="fas fa-image fa-2x opacity-25"></i></div>
                                     @endif
@@ -206,7 +259,7 @@
                                 <div class="col-md-4 text-center">
                                     <span class="small text-muted d-block mb-2">Foto NPWP</span>
                                     @if($c->foto_npwp)
-                                        <a href="{{ asset('storage/' . $c->foto_npwp) }}" target="_blank"><img src="{{ asset('storage/' . $c->foto_npwp) }}" class="img-preview-box shadow-sm"></a>
+                                        <a href="{{ route('berkas', $c->foto_npwp) }}" target="_blank"><img src="{{ route('berkas', $c->foto_npwp) }}" class="img-preview-box shadow-sm"></a>
                                     @else
                                         <div class="img-preview-box d-flex align-items-center justify-content-center text-muted"><i class="fas fa-image fa-2x opacity-25"></i></div>
                                     @endif
@@ -214,7 +267,7 @@
                                 <div class="col-md-4 text-center">
                                     <span class="small text-muted d-block mb-2">Foto Toko</span>
                                     @if($c->foto_toko)
-                                        <a href="{{ asset('storage/' . $c->foto_toko) }}" target="_blank"><img src="{{ asset('storage/' . $c->foto_toko) }}" class="img-preview-box shadow-sm"></a>
+                                        <a href="{{ route('berkas', $c->foto_toko) }}" target="_blank"><img src="{{ route('berkas', $c->foto_toko) }}" class="img-preview-box shadow-sm"></a>
                                     @else
                                         <div class="img-preview-box d-flex align-items-center justify-content-center text-muted"><i class="fas fa-image fa-2x opacity-25"></i></div>
                                     @endif

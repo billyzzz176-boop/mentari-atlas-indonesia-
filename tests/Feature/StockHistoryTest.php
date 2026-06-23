@@ -6,6 +6,7 @@ use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
 use App\Models\Barang;
+use App\Models\Pembelian;
 use App\Models\StockHistory;
 
 class StockHistoryTest extends TestCase
@@ -32,6 +33,19 @@ class StockHistoryTest extends TestCase
         ]);
 
         $response->assertRedirect();
+        
+        $pembelian = Pembelian::first();
+        $this->assertNotNull($pembelian);
+
+        // Run sorting/QC to complete the purchase and add stock
+        $responseSortir = $this->actingAs($user)->post(route('pembelian.sortir', $pembelian->no_pembelian), [
+            'pembelian_ids' => [$pembelian->id],
+            'qty_bagus' => [$pembelian->id => 10],
+            'qty_rusak' => [$pembelian->id => 0],
+            'qty_kurang' => [$pembelian->id => 0],
+        ]);
+        
+        $responseSortir->assertRedirect();
 
         $this->assertDatabaseHas('stock_histories', [
             'barang_id' => $barang->id,
@@ -44,7 +58,7 @@ class StockHistoryTest extends TestCase
 
     public function test_barang_history_page_displays_stock_history()
     {
-        $user = User::factory()->create(['role' => 'admin_warehouse']);
+        $user = User::factory()->create(['role' => 'data_barang']);
         $barang = Barang::create([
             'kode_barang' => 'B101',
             'nama_barang' => 'Produk History',
@@ -67,7 +81,7 @@ class StockHistoryTest extends TestCase
         $response = $this->actingAs($user)->get(route('barang.history', $barang->id));
 
         $response->assertOk();
-        $response->assertSee('Riwayat Stok Barang');
+        $response->assertSee('Log Riwayat Data');
         $response->assertSee('Pengisian stok awal manual.');
     }
 }

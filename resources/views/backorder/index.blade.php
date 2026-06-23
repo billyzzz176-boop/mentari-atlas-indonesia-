@@ -67,7 +67,7 @@
 
     {{-- TABEL DATA BACK ORDER (MENGGUNAKAN TEMA BARU) --}}
     <div class="table-wrapper-mentari">
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-lg-block">
             <table class="table table-mentari table-mentari-compact align-middle mb-0" style="font-size: 0.85rem;">
                 <thead>
                     <tr>
@@ -157,6 +157,87 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- MOBILE CARDS --}}
+    <div class="d-lg-none p-2" id="bo-mobile-list">
+        @forelse($backOrders as $bo)
+            @php
+                $kategoriFilter = (strtolower($bo->status_bo) === 'terpenuhi' || strtolower($bo->status_bo) === 'selesai') ? 'completed' : 'pending';
+            @endphp
+            <div class="card card-custom mb-3 bo-row" data-status="{{ $kategoriFilter }}" style="border-left: 4px solid {{ $kategoriFilter === 'completed' ? '#10b981' : '#f59e0b' }} !important;">
+                <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e2e8f0;">
+                    <span class="fw-bold text-slate-dark" style="font-size: 0.85rem;"><i class="fas fa-file-invoice me-1"></i> {{ $bo->penjualan->no_so }}</span>
+                    <span class="text-slate-muted small" style="font-size: 0.75rem;"><i class="far fa-calendar-alt me-1"></i> {{ date('d M Y', strtotime($bo->penjualan->tanggal_order)) }}</span>
+                </div>
+                <div class="card-body p-3">
+                    <h6 class="fw-bold text-slate-dark mb-1" style="font-size: 1rem;">{{ $bo->penjualan->customer->nama_customer }}</h6>
+                    <div class="text-muted mb-3" style="font-size: 0.8rem;">
+                        <i class="fas fa-user-tie me-1"></i> Sales: <strong>{{ $bo->penjualan->user->name ?? 'Sales' }}</strong>
+                    </div>
+
+                    <div class="p-2 bg-light rounded-3 mb-3 border">
+                        <div class="fw-bold text-emerald-custom" style="font-size: 0.85rem;">{{ $bo->barang->nama_barang }}</div>
+                        <div class="text-muted small" style="font-size: 0.75rem;">SKU: {{ $bo->barang->kode_barang }}</div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded text-center border">
+                                <span class="d-block text-muted" style="font-size: 0.65rem;">Permintaan Awal</span>
+                                <span class="fw-bold text-slate-dark" style="font-size: 0.85rem;">{{ $bo->jumlah_diminta }} Pcs</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-danger-subtle rounded text-center border border-danger-subtle">
+                                <span class="d-block text-danger" style="font-size: 0.65rem;">Kekurangan (BO)</span>
+                                <span class="fw-bold text-danger" style="font-size: 0.85rem;">{{ $bo->jumlah_kurang }} Pcs</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            @if($kategoriFilter === 'completed')
+                                <span class="badge badge-success-soft rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.75rem;">
+                                    <i class="fas fa-check-circle me-1"></i> Terpenuhi
+                                </span>
+                            @else
+                                <span class="badge badge-warning-soft rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.75rem;">
+                                    <i class="fas fa-circle-notch fa-spin me-1"></i> Menunggu Stok
+                                </span>
+                            @endif
+                        </div>
+                        <div>
+                            @if($kategoriFilter === 'pending')
+                                @if($bo->barang->stok_akhir >= $bo->jumlah_kurang)
+                                    <form action="{{ route('backorder.penebusan', $bo->id) }}" method="POST" onsubmit="return confirm('Konfirmasi: Lepaskan sisa stok dan kemas barang sekarang?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-emerald-custom btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm" style="font-size: 0.75rem;" title="Stok tersedia: {{ $bo->barang->stok_akhir }} Unit. Klik untuk kirim barang.">
+                                            <i class="fas fa-box-open me-1"></i> Kemas Sisa
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ url('/pembelian') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm" style="font-size: 0.75rem;" title="Stok gudang sisa {{ $bo->barang->stok_akhir ?? 0 }}, butuh total {{ $bo->jumlah_kurang }}.">
+                                        <i class="fas fa-truck-loading me-1"></i> Restock
+                                    </a>
+                                @endif
+                            @else
+                                <span class="text-slate-muted text-uppercase small fw-bold" style="font-size: 0.75rem;"><i class="fas fa-lock me-1"></i> Selesai</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="card p-5 text-center text-slate-muted bg-white shadow-sm" style="border-radius: 12px;">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="fas fa-check-double text-success fa-3x mb-3 opacity-25"></i>
+                    <span class="fw-bold text-slate-dark mb-1">Tidak Ada Antrean Back Order</span>
+                    <span class="small">Semua pesanan pelanggan saat ini terlayani dengan stok yang aman.</span>
+                </div>
+            </div>
+        @endforelse
     </div>
 </div>
 

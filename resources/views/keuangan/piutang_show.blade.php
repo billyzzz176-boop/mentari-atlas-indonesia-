@@ -232,21 +232,9 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <style>
-                    @media (max-width: 991.98px) {
-                        #tabelArusKas, #tabelArusKas tbody, #tabelArusKas tr, #tabelArusKas td { display: block; width: 100% !important; min-width: auto !important; }
-                        #tabelArusKas thead { display: none; }
-                        #tabelArusKas tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-                        #tabelArusKas td { border: none !important; padding: 0.5rem 0 !important; text-align: right !important; display: flex; justify-content: space-between; align-items: center; }
-                        #tabelArusKas td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-right: 1rem; text-align: left; }
-                        #tabelArusKas td:first-child:not([colspan]) { border-bottom: 1px dashed #e2e8f0 !important; padding-bottom: 0.75rem !important; margin-bottom: 0.5rem; }
-                        #tabelArusKas td:last-child:not([colspan]) { border-top: 1px dashed #e2e8f0 !important; margin-top: 0.5rem; padding-top: 1rem !important; justify-content: center; }
-                        #tabelArusKas td:last-child:not([colspan])::before { display: none; }
-                        #tabelArusKas tfoot { display: block; width: 100%; margin-top: 1rem; }
-                        #tabelArusKas tfoot tr { background: #e2e8f0; border-radius: 0.5rem; padding: 1rem; }
-                    }
-                </style>
-                <table id="tabelArusKas" class="table table-hover align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
+                
+                <div class="d-none d-lg-block table-responsive">
+                  <table id="tabelArusKas" class="table table-hover align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
                     <thead class="table-custom-header">
                         <tr>
                             <th class="ps-4 text-center" width="5%">No</th>
@@ -278,7 +266,7 @@
                             <td data-label="Catatan & Bukti" class="pe-4">
                                 <div class="text-slate-muted fst-italic mb-2" style="font-size: 0.8rem;">"{{ $bayar->keterangan ?? 'Tidak ada catatan' }}"</div>
                                 @if($bayar->bukti_bayar)
-                                    <a href="{{ asset('storage/' . $bayar->bukti_bayar) }}" target="_blank" class="btn btn-sm btn-light border shadow-sm rounded-pill text-slate-dark" style="font-size: 0.75rem;">
+                                    <a href="{{ route('berkas', $bayar->bukti_bayar) }}" target="_blank" class="btn btn-sm btn-light border shadow-sm rounded-pill text-slate-dark" style="font-size: 0.75rem;">
                                         <i class="fas fa-image text-info me-1"></i> Lihat Struk
                                     </a>
                                 @else
@@ -309,6 +297,60 @@
                         </tr>
                     </tfoot>
                 </table>
+              </div>
+
+              {{-- MOBILE CARDS --}}
+              <div class="d-lg-none p-2">
+                  @forelse($piutang->pembayarans->whereNotIn('metode_pembayaran', ['Credit Note', 'Retur Customer / Credit Note'])->sortBy('created_at') as $bayar)
+                      <div class="card card-custom mb-3 border-0 shadow-sm" style="border-radius: 1rem; overflow: hidden; background: #fff;">
+                          <div class="card-header bg-white border-bottom border-light p-3 d-flex justify-content-between align-items-center">
+                              <div>
+                                  <div class="fw-bold text-slate-dark">{{ \Carbon\Carbon::parse($bayar->tanggal_bayar)->format('d M Y') }}</div>
+                                  <div class="text-slate-muted small"><i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($bayar->tanggal_bayar)->format('H:i') }} WIB</div>
+                              </div>
+                              <div>
+                                  <span class="badge badge-secondary-soft rounded-pill px-3 py-1.5"><i class="fas fa-wallet me-1"></i> {{ $bayar->metode_pembayaran ?? 'Tidak dicatat' }}</span>
+                              </div>
+                          </div>
+                          <div class="card-body p-3">
+                              <div class="d-flex justify-content-between mb-2">
+                                  <span class="text-slate-muted fw-bold small text-uppercase">Nominal Masuk</span>
+                                  <span class="fw-bold text-success font-monospace-custom fs-6">Rp {{ number_format($bayar->jumlah_bayar, 0, ',', '.') }}</span>
+                              </div>
+                              <div class="d-flex justify-content-between mb-3 border-bottom border-light pb-2">
+                                  <span class="text-slate-muted fw-bold small text-uppercase">Admin</span>
+                                  <span class="fw-semibold text-slate-dark"><i class="fas fa-user-circle text-emerald-custom me-1"></i> {{ $bayar->penerima->name ?? 'Sistem' }}</span>
+                              </div>
+                              <div class="p-2 rounded border" style="background: #f8fafc;">
+                                  <div class="text-slate-muted fst-italic mb-2 text-center" style="font-size: 0.8rem;">"{{ $bayar->keterangan ?? 'Tidak ada catatan' }}"</div>
+                                  <div class="text-center">
+                                      @if($bayar->bukti_bayar)
+                                          <a href="{{ route('berkas', $bayar->bukti_bayar) }}" target="_blank" class="btn btn-sm btn-white border shadow-sm rounded-pill text-slate-dark w-100" style="font-size: 0.75rem;">
+                                              <i class="fas fa-image text-info me-1"></i> Lihat Struk
+                                          </a>
+                                      @else
+                                          <span class="badge badge-warning-soft px-2 py-1 rounded-pill w-100" style="font-size: 0.65rem;">
+                                              <i class="fas fa-exclamation-triangle me-1"></i> Tanpa Bukti Lampiran
+                                          </span>
+                                      @endif
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  @empty
+                      <div class="text-center py-4 text-slate-muted bg-white rounded shadow-sm border border-light">
+                          <i class="fas fa-comment-dollar fa-2x mb-2 opacity-25 d-block"></i>
+                          <span class="small">Belum ada riwayat penerimaan kas.</span>
+                      </div>
+                  @endforelse
+                  
+                  {{-- TFOOT --}}
+                  <div class="card border-0 shadow-sm" style="border-radius: 1rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                      <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                          <div class="text-white fw-bold">TOTAL KAS MASUK</div>
+                          <div class="text-white fw-bold fs-5 font-monospace-custom">Rp {{ number_format($piutang->pembayarans->whereNotIn('metode_pembayaran', ['Credit Note', 'Retur Customer / Credit Note'])->sum('jumlah_bayar'), 0, ',', '.') }}</div>
+                      </div>
+                  </div>
             </div>
         </div>
     </div>
@@ -320,21 +362,9 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <style>
-                    @media (max-width: 991.98px) {
-                        #tabelCN, #tabelCN tbody, #tabelCN tr, #tabelCN td { display: block; width: 100% !important; min-width: auto !important; }
-                        #tabelCN thead { display: none; }
-                        #tabelCN tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-                        #tabelCN td { border: none !important; padding: 0.5rem 0 !important; text-align: right !important; display: flex; justify-content: space-between; align-items: center; }
-                        #tabelCN td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; font-weight: bold; color: #64748b; text-transform: uppercase; margin-right: 1rem; text-align: left; }
-                        #tabelCN td:first-child:not([colspan]) { border-bottom: 1px dashed #e2e8f0 !important; padding-bottom: 0.75rem !important; margin-bottom: 0.5rem; }
-                        #tabelCN td:last-child:not([colspan]) { border-top: 1px dashed #e2e8f0 !important; margin-top: 0.5rem; padding-top: 1rem !important; justify-content: center; }
-                        #tabelCN td:last-child:not([colspan])::before { display: none; }
-                        #tabelCN tfoot { display: block; width: 100%; margin-top: 1rem; }
-                        #tabelCN tfoot tr { background: #e2e8f0; border-radius: 0.5rem; padding: 1rem; }
-                    }
-                </style>
-                <table id="tabelCN" class="table table-hover align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
+                
+                <div class="d-none d-lg-block table-responsive">
+                  <table id="tabelCN" class="table table-hover align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
                     <thead class="table-custom-header">
                         <tr>
                             <th class="ps-4 text-center" width="5%">No</th>
@@ -390,6 +420,49 @@
                         </tr>
                     </tfoot>
                 </table>
+              </div>
+
+              {{-- MOBILE CARDS --}}
+              <div class="d-lg-none p-2">
+                  @forelse($piutang->pembayarans->whereIn('metode_pembayaran', ['Credit Note', 'Retur Customer / Credit Note'])->sortBy('created_at') as $cn)
+                      <div class="card card-custom mb-3 border-0 shadow-sm" style="border-radius: 1rem; overflow: hidden; background: #fff;">
+                          <div class="card-header bg-white border-bottom border-light p-3 d-flex justify-content-between align-items-center">
+                              <div>
+                                  <div class="fw-bold text-slate-dark">{{ \Carbon\Carbon::parse($cn->tanggal_bayar)->format('d M Y') }}</div>
+                                  <div class="text-slate-muted small"><i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($cn->tanggal_bayar)->format('H:i') }} WIB</div>
+                              </div>
+                              <div>
+                                  <span class="badge badge-warning-soft text-warning rounded-pill px-3 py-1.5"><i class="fas fa-cut me-1"></i> {{ $cn->metode_pembayaran }}</span>
+                              </div>
+                          </div>
+                          <div class="card-body p-3">
+                              <div class="d-flex justify-content-between mb-2">
+                                  <span class="text-slate-muted fw-bold small text-uppercase">Nominal Potongan</span>
+                                  <span class="fw-bold text-warning font-monospace-custom fs-6">- Rp {{ number_format($cn->jumlah_bayar, 0, ',', '.') }}</span>
+                              </div>
+                              <div class="d-flex justify-content-between mb-3 border-bottom border-light pb-2">
+                                  <span class="text-slate-muted fw-bold small text-uppercase">Admin</span>
+                                  <span class="fw-semibold text-slate-dark"><i class="fas fa-user-shield text-warning me-1"></i> {{ $cn->penerima->name ?? 'Sistem' }}</span>
+                              </div>
+                              <div class="p-2 rounded border" style="background: #f8fafc;">
+                                  <div class="text-slate-muted fst-italic mb-2 text-center" style="font-size: 0.8rem;">"{{ $cn->keterangan ?? 'Tidak ada catatan' }}"</div>
+                              </div>
+                          </div>
+                      </div>
+                  @empty
+                      <div class="text-center py-4 text-slate-muted bg-white rounded shadow-sm border border-light">
+                          <i class="fas fa-tags fa-2x mb-2 opacity-25 d-block text-warning"></i>
+                          <span class="small">Belum ada riwayat potongan Credit Note.</span>
+                      </div>
+                  @endforelse
+                  
+                  {{-- TFOOT --}}
+                  <div class="card border-0 shadow-sm" style="border-radius: 1rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                      <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                          <div class="text-white fw-bold">TOTAL POTONGAN CN</div>
+                          <div class="text-white fw-bold fs-5 font-monospace-custom">Rp {{ number_format($piutang->pembayarans->whereIn('metode_pembayaran', ['Credit Note', 'Retur Customer / Credit Note'])->sum('jumlah_bayar'), 0, ',', '.') }}</div>
+                      </div>
+                  </div>
             </div>
         </div>
     </div>
@@ -414,3 +487,4 @@
     }
 </script>
 @endsection
+

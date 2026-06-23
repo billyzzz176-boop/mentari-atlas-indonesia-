@@ -28,7 +28,7 @@ class Utang extends Model
     // Relasi ke tabel Users untuk melihat siapa Admin/Direktur yang menginput pelunasan utang
     public function PJ_Bayar()
     {
-        return $this->belongsTo(\App\Models\User::class, 'diinput_by');
+        return $this->belongsTo(\App\Models\User::class, 'diinput_by')->withTrashed();
     }
 
     // Relasi untuk menarik semua data riwayat cicilan/pembayaran utang

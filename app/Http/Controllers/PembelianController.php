@@ -17,69 +17,105 @@ use App\Models\ActivityLog;
 
 class PembelianController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->input('search');
+
         $barangs = Barang::orderBy('kode_barang', 'asc')->get();
-        // Tampilkan semua PO, yang paling baru di atas
-        $riwayat = Pembelian::with('barang')->orderBy('created_at', 'asc')->get();
+        
+        $query = DB::table('pembelians')
+            ->select('no_pembelian')
+            ->groupBy('no_pembelian');
+            
+        if ($search) {
+            $query->where('no_pembelian', 'like', "%{$search}%")
+                  ->orWhere('nama_supplier', 'like', "%{$search}%");
+        }
+        
+        $poList = $query->orderBy(DB::raw('MIN(created_at)'), 'asc')->paginate(10)->withQueryString();
+
+        $riwayat = Pembelian::with('barang')
+            ->whereIn('no_pembelian', $poList->pluck('no_pembelian'))
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->groupBy('no_pembelian');
+            
         $suppliers = Supplier::orderBy('id', 'asc')->get();
         
-        return view('pembelian.index', compact('barangs', 'riwayat', 'suppliers'));
+        return view('pembelian.index', compact('barangs', 'riwayat', 'suppliers', 'poList', 'search'));
     }
 
-    // FASE 1: BUAT PURCHASE ORDER (TIDAK MENAMBAH STOK)
     public function store(Request $request)
     {
+        // Normalize scalar inputs to arrays for backward compatibility
+        if ($request->has('barang_id') && !is_array($request->barang_id)) {
+            $request->merge([
+                'barang_id' => [$request->barang_id],
+                'jumlah_beli' => [$request->jumlah_beli],
+                'harga_beli_hpp' => [$request->harga_beli_hpp],
+            ]);
+        }
+
         $request->validate([
             'nama_supplier'  => 'required|string|max:255',
-            'barang_id'      => 'required|exists:barangs,id',
-            'jumlah_beli'    => 'required|integer|min:1',
-            'harga_beli_hpp' => 'required|numeric|min:0',
+            'barang_id.*'      => 'required|exists:barangs,id',
+            'jumlah_beli.*'    => 'required|integer|min:1',
+            'harga_beli_hpp.*' => 'required|numeric|min:0',
+            'foto_invoice'     => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
         try {
             DB::beginTransaction();
 
             $datePrefix = 'PO-' . date('Ymd') . '-';
+            
+            $barangIds = $request->barang_id;
+            $jumlahBelis = $request->jumlah_beli;
+            $hargaBelis = $request->harga_beli_hpp;
+            
+            $fotoPath = null;
+            if ($request->hasFile('foto_invoice')) {
+                $fotoPath = $request->file('foto_invoice')->store('pembelian_invoices', 'public');
+            }
+            
             $lastPo = Pembelian::where('no_pembelian', 'like', $datePrefix . '%')->orderBy('no_pembelian', 'desc')->first();
             $newPoNum = $lastPo ? intval(substr($lastPo->no_pembelian, -4)) + 1 : 1;
             $no_pembelian = $datePrefix . str_pad($newPoNum, 4, '0', STR_PAD_LEFT);
+            
+            for ($i = 0; $i < count($barangIds); $i++) {
+                $qty = $jumlahBelis[$i];
+                $hpp = $hargaBelis[$i];
+                $total_bayar = $qty * $hpp;
 
-            $total_bayar = $request->jumlah_beli * $request->harga_beli_hpp;
+                $pembelian = Pembelian::create([
+                    'no_pembelian'   => $no_pembelian,
+                    'nama_supplier'  => strtoupper(trim($request->nama_supplier)),
+                    'barang_id'      => $barangIds[$i],
+                    'jumlah_beli'    => $qty,
+                    'harga_beli_hpp' => $hpp,
+                    'total_bayar'    => $total_bayar,
+                    'tanggal_beli'   => date('Y-m-d'),
+                    'status_barang'  => 'pending',
+                    'foto_invoice'   => $fotoPath,
+                ]);
 
-            // 1. Simpan data PO dengan status pending
-            $pembelian = Pembelian::create([
-                'no_pembelian'   => $no_pembelian,
-                'nama_supplier'  => strtoupper(trim($request->nama_supplier)),
-                'barang_id'      => $request->barang_id,
-                'jumlah_beli'    => $request->jumlah_beli,
-                'harga_beli_hpp' => $request->harga_beli_hpp,
-                'total_bayar'    => $total_bayar,
-                'tanggal_beli'   => date('Y-m-d'),
-                'status_barang'  => 'pending', // <--- STOK TERTATAHAN DI SINI
-            ]);
+                $barang = Barang::where('id', $barangIds[$i])->lockForUpdate()->first();
+                if ($barang && $barang->harga_beli != $hpp) {
+                    $oldHpp = $barang->harga_beli;
+                    
+                    $barang->harga_beli = $hpp;
+                    $barang->save();
 
-            // 2. Update HPP (harga_beli) di master Barang jika ada perubahan
-            $barang = Barang::find($request->barang_id);
-            if ($barang && $barang->harga_beli != $request->harga_beli_hpp) {
-                $oldHpp = $barang->harga_beli;
-                $newHpp = $request->harga_beli_hpp;
-                
-                $barang->harga_beli = $newHpp;
-                $barang->save();
-
-                // Catat perubahan HPP ke riwayat
-                \App\Models\StockHistory::record(
-                    $barang,
-                    0, // tidak ada perubahan fisik stok
-                    'edit_data',
-                    $no_pembelian,
-                    "Update HPP via PO: Rp " . number_format($oldHpp, 0, ',', '.') . " -> Rp " . number_format($newHpp, 0, ',', '.')
-                );
+                    \App\Models\StockHistory::record(
+                        $barang,
+                        0,
+                        'edit_data',
+                        $no_pembelian,
+                        "Update HPP via PO: Rp " . number_format($oldHpp, 0, ',', '.') . " -> Rp " . number_format($hpp, 0, ',', '.')
+                    );
+                }
             }
-
-            // Utang Supplier ditunda sampai proses Sortir fisik barang (dipindahkan ke FASE 2)
-
+            
             ActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'TAMBAH PEMBELIAN',
@@ -95,103 +131,125 @@ class PembelianController extends Controller
         }
     }
 
-    // FASE 2: QUALITY CONTROL & FINALISASI STOK
-    public function prosesSortir(Request $request, $id)
+    public function prosesSortir(Request $request, $no_pembelian)
     {
         $request->validate([
-            'qty_bagus'  => 'required|integer|min:0',
-            'qty_rusak'  => 'required|integer|min:0',
-            'qty_kurang' => 'required|integer|min:0',
+            'pembelian_ids'   => 'required|array',
+            'qty_bagus'       => 'required|array',
+            'qty_rusak'       => 'required|array',
+            'qty_kurang'      => 'required|array',
+            'qty_bagus.*'     => 'integer|min:0',
+            'qty_rusak.*'     => 'integer|min:0',
+            'qty_kurang.*'    => 'integer|min:0',
         ]);
 
-        $pembelian = Pembelian::findOrFail($id);
+        $pembelians = Pembelian::where('no_pembelian', $no_pembelian)->get();
+        if ($pembelians->isEmpty()) {
+            return back()->withErrors(['error' => 'Data PO tidak ditemukan.']);
+        }
         
-        if ($pembelian->status_barang === 'selesai') {
+        if ($pembelians->first()->status_barang === 'selesai') {
             return back()->withErrors(['error' => 'Gagal! PO ini sudah disortir sebelumnya.']);
         }
 
-        $totalCek = $request->qty_bagus + $request->qty_rusak + $request->qty_kurang;
-        if ($totalCek !== $pembelian->jumlah_beli) {
-            return back()->withErrors(['error' => "Total sortir ({$totalCek}) tidak sama dengan jumlah PO awal ({$pembelian->jumlah_beli}). Pastikan perhitungannya pas!"]);
+        foreach($request->pembelian_ids as $id) {
+            $pembelian = $pembelians->firstWhere('id', $id);
+            if (!$pembelian) continue;
+            
+            $bagus = $request->qty_bagus[$id] ?? 0;
+            $rusak = $request->qty_rusak[$id] ?? 0;
+            $kurang = $request->qty_kurang[$id] ?? 0;
+            
+            $totalCek = (int)$bagus + (int)$rusak + (int)$kurang;
+            if ($totalCek != (int)$pembelian->jumlah_beli) {
+                return back()->withErrors(['error' => "Total sortir untuk barang {$pembelian->barang->nama_barang} ({$totalCek}) tidak sama dengan jumlah order awal ({$pembelian->jumlah_beli}). Pastikan perhitungannya pas!"]);
+            }
         }
 
         try {
             DB::beginTransaction();
 
-            // 1. Update Status Pembelian
-            $pembelian->update([
-                'status_barang' => 'selesai',
-                'qty_bagus'     => $request->qty_bagus,
-                'qty_rusak'     => $request->qty_rusak,
-                'qty_kurang'    => $request->qty_kurang,
-            ]);
+            $totalSemuaPO = 0;
+            $adaRetur = false;
+            $supplierName = $pembelians->first()->nama_supplier;
+            
+            $noReturAuto = 'RE-QC-' . date('Ymd') . rand(1000, 9999);
 
-            $barang = Barang::findOrFail($pembelian->barang_id);
-            $hargaBeliBaru = $pembelian->harga_beli_hpp;
-
-            // 2. EKSEKUSI STOK FISIK
-            if ($request->qty_bagus > 0) {
-                $stokAkhirLama = $barang->stok_akhir ?? 0;
-                $barang->update([
-                    'barang_masuk' => $barang->barang_masuk + $request->qty_bagus,
-                    'stok_akhir'   => $stokAkhirLama + $request->qty_bagus,
-                    'harga_beli'   => $hargaBeliBaru // UPDATE HPP LATEST PRICE
-                ]);
-                StockHistory::record($barang, $request->qty_bagus, 'purchase', $pembelian->no_pembelian, 'Penerimaan QC: Barang Bagus.', $stokAkhirLama);
-            }
-
-            // PERUBAHAN KRUSIAL: Barang rusak masuk ke karantina (stok_rusak bertambah, siap diretur)
-            if ($request->qty_rusak > 0) {
-                $stokRusakLama = $barang->stok_rusak ?? 0;
-                $barang->update([
-                    'stok_rusak' => $stokRusakLama + $request->qty_rusak
-                ]);
-                StockHistory::record($barang, $request->qty_rusak, 'purchase', $pembelian->no_pembelian, 'Penerimaan QC: Barang Cacat/Rusak.', $stokRusakLama);
-            }
-
-            // 3. AUTO-DEBIT NOTE: HANYA BUAT DRAF (PENDING), TIDAK MEMOTONG UTANG
-            if ($request->has('potong_tagihan') && ($request->qty_rusak > 0 || $request->qty_kurang > 0)) {
-                $totalQtyBermasalah = $request->qty_rusak + $request->qty_kurang;
-                $nominalPotongan = $totalQtyBermasalah * $hargaBeliBaru;
+            foreach($request->pembelian_ids as $id) {
+                $pembelian = $pembelians->firstWhere('id', $id);
+                if (!$pembelian) continue;
                 
-                $noReturAuto = 'RE-QC-' . date('Ymd') . rand(100, 999);
-                $alasan = "Klaim Otomatis Hasil QC: Terdapat {$request->qty_rusak} rusak, {$request->qty_kurang} kurang/hilang dari total order {$pembelian->jumlah_beli} Pcs.";
+                $bagus = $request->qty_bagus[$id] ?? 0;
+                $rusak = $request->qty_rusak[$id] ?? 0;
+                $kurang = $request->qty_kurang[$id] ?? 0;
 
-                // Buat Data Retur dengan status PENDING (Belum dieksekusi potongannya)
-                // Jenisnya kita set 'fisik' khusus untuk rusak, agar nanti saat dieksekusi, stok rusak berkurang.
-                DB::table('returs')->insert([
-                    'no_retur' => $noReturAuto, 
-                    'tipe' => 'pembelian', 
-                    'jenis_retur' => ($request->qty_rusak > 0) ? 'fisik' : 'harga_debit_note', // Pintar: Jika ada yang rusak, wajib retur fisik
-                    'referensi_id' => $pembelian->id, 
-                    'barang_id' => $barang->id, 
-                    'qty' => $totalQtyBermasalah,
-                    'kondisi' => ($request->qty_rusak > 0) ? 'rusak' : 'tidak_mempengaruhi', 
-                    'nominal_potongan' => $nominalPotongan,
-                    'status_retur' => 'pending', // <--- MASUK KARANTINA (DRAF)
-                    'alasan' => $alasan, 
-                    'created_at' => now(), 
-                    'updated_at' => now(),
+                $pembelian->update([
+                    'status_barang' => 'selesai',
+                    'qty_bagus'     => $bagus,
+                    'qty_rusak'     => $rusak,
+                    'qty_kurang'    => $kurang,
                 ]);
 
-                // Credit Note dan Pemotongan Utang DITANGGUHKAN sampai tombol "Return Sekarang" diklik.
+                $barang = Barang::where('id', $pembelian->barang_id)->lockForUpdate()->firstOrFail();
+                $hargaBeliBaru = $pembelian->harga_beli_hpp;
+                
+                $totalSemuaPO += $pembelian->total_bayar;
+
+                if ($bagus > 0) {
+                    $stokAkhirLama = $barang->stok_akhir ?? 0;
+                    $barang->update([
+                        'barang_masuk' => $barang->barang_masuk + $bagus,
+                        'stok_akhir'   => $stokAkhirLama + $bagus,
+                        'harga_beli'   => $hargaBeliBaru
+                    ]);
+                    StockHistory::record($barang, $bagus, 'purchase', $no_pembelian, 'Penerimaan QC: Barang Bagus.', $stokAkhirLama);
+                }
+
+                if ($rusak > 0) {
+                    $stokRusakLama = $barang->stok_rusak ?? 0;
+                    $barang->update([
+                        'stok_rusak' => $stokRusakLama + $rusak
+                    ]);
+                    StockHistory::record($barang, $rusak, 'purchase', $no_pembelian, 'Penerimaan QC: Barang Cacat/Rusak.', $stokRusakLama);
+                }
+
+                if ($request->has('potong_tagihan') && ($rusak > 0 || $kurang > 0)) {
+                    $adaRetur = true;
+                    $totalQtyBermasalah = $rusak + $kurang;
+                    $nominalPotongan = $totalQtyBermasalah * $hargaBeliBaru;
+                    
+                    $alasan = "Klaim Otomatis Hasil QC: Terdapat {$rusak} rusak, {$kurang} kurang/hilang dari total order {$pembelian->jumlah_beli} Pcs.";
+
+                    DB::table('returs')->insert([
+                        'no_retur' => $noReturAuto, 
+                        'tipe' => 'pembelian', 
+                        'jenis_retur' => ($rusak > 0) ? 'fisik' : 'harga_debit_note',
+                        'referensi_id' => $pembelian->id, 
+                        'barang_id' => $barang->id, 
+                        'qty' => $totalQtyBermasalah,
+                        'kondisi' => ($rusak > 0) ? 'rusak' : 'tidak_mempengaruhi', 
+                        'nominal_potongan' => $nominalPotongan,
+                        'status_retur' => 'pending',
+                        'alasan' => $alasan, 
+                        'created_at' => now(), 
+                        'updated_at' => now(),
+                    ]);
+                }
             }
 
-            // 4. OTOMATISASI JURNAL UTANG SUPPLIER (Dibuat setelah barang tiba dan disortir)
-            // Pastikan utang belum dibuat (untuk menghindari dobel pada PO lama)
-            if (!Utang::where('pembelian_id', $pembelian->id)->exists()) {
+            $firstPembelianId = $pembelians->first()->id;
+            if (!Utang::where('pembelian_id', $firstPembelianId)->exists()) {
                 $noUtangJurnal = 'UTG-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
                 
-                // Cari data master supplier untuk mengambil Termin Jatuh Tempo
-                $supplierMaster = \App\Models\Supplier::where('nama_supplier', $pembelian->nama_supplier)->first();
+                $supplierMaster = \App\Models\Supplier::whereRaw('LOWER(nama_supplier) = ?', [strtolower($supplierName)])->first();
                 $jatuhTempoHari = $supplierMaster && $supplierMaster->jatuh_tempo_hari !== null 
                                     ? $supplierMaster->jatuh_tempo_hari 
-                                    : 30; // Default fallback
+                                    : 30;
 
                 Utang::create([
                     'no_utang_jurnal'     => $noUtangJurnal,
-                    'pembelian_id'        => $pembelian->id,
-                    'total_utang'         => $pembelian->total_bayar,
+                    'pembelian_id'        => $firstPembelianId,
+                    'total_utang'         => $totalSemuaPO,
                     'total_dibayar'       => 0,
                     'status_bayar'        => 'belum_bayar',
                     'tanggal_jatuh_tempo' => date('Y-m-d', strtotime('+' . $jatuhTempoHari . ' days')),
@@ -201,13 +259,13 @@ class PembelianController extends Controller
             ActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'UPDATE STATUS PEMBELIAN',
-                'description' => Auth::user()->name . ' menyelesaikan proses QC/Sortir untuk PO: ' . $pembelian->no_pembelian,
+                'description' => Auth::user()->name . ' menyelesaikan proses QC/Sortir masal untuk PO: ' . $no_pembelian,
                 'ip_address' => request()->ip(),
             ]);
 
             DB::commit();
 
-            if ($request->has('potong_tagihan') && ($request->qty_rusak > 0 || $request->qty_kurang > 0)) {
+            if ($request->has('potong_tagihan') && $adaRetur) {
                 return back()->with('success', "Proses QC Selesai! Stok Bagus & Rusak telah di-update. (Draf Klaim Retur/Utang telah disiapkan dan menunggu persetujuan).");
             } else {
                 return back()->with('success', "Proses QC Selesai! Semua stok bagus telah dimasukkan ke gudang.");

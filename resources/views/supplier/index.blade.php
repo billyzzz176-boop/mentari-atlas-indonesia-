@@ -63,7 +63,7 @@
 
     {{-- TABEL TEMA PREMIUM --}}
     <div class="table-wrapper-mentari">
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-lg-block">
             <table class="table table-mentari table-mentari-compact align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
                 <thead>
                     <tr>
@@ -119,6 +119,39 @@
             </table>
         </div>
     </div>
+
+                {{-- MOBILE CARDS --}}
+                <div class="d-lg-none p-3" style="background-color: var(--bg-page);">
+                    @forelse($suppliers as $s)
+                    <div class="card card-custom mb-3" style="border-radius: 16px;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-emerald-custom fw-bold px-2 py-1" style="border-radius: 8px;">{{ $s->kode_supplier }}</span>
+                            </div>
+                            
+                            <h6 class="fw-bold text-slate-dark mb-1" style="font-size: 1.05rem;">{{ $s->nama_supplier }}</h6>
+                            <div class="text-muted mb-3" style="font-size: 0.8rem;"><i class="fas fa-phone-alt me-1"></i>{{ $s->telepon ?: '-' }}</div>
+                            
+                            <div class="mb-3 bg-light p-2" style="border-radius: 12px; border: 1px solid var(--border-panel);">
+                                <small class="text-muted d-block" style="font-size:0.65rem;">Termin Bayar</small>
+                                <span class="badge bg-warning text-dark px-2 py-1">{{ $s->jatuh_tempo_hari ?? 30 }} Hari</span>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-primary-soft flex-fill fw-bold py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalDetail{{ $s->id }}"><i class="fas fa-eye me-1"></i>Detail</button>
+                                <button type="button" class="btn btn-sm btn-warning-soft flex-fill fw-bold py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $s->id }}"><i class="fas fa-pen me-1"></i>Edit</button>
+                                <form action="{{ route('supplier.destroy', $s->id) }}" method="POST" class="m-0 flex-fill">
+                                    @csrf @method('DELETE')
+                                    <button type="button" class="btn btn-sm btn-danger-soft w-100 fw-bold py-2 btn-delete" style="border-radius: 10px;"><i class="fas fa-trash-alt"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-5 text-muted bg-white shadow-sm" style="border-radius: 16px;">Belum ada data supplier.</div>
+                    @endforelse
+                </div>
+
 </div>
 
 {{-- =========================================================================

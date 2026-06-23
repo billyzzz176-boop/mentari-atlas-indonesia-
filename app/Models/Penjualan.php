@@ -57,16 +57,21 @@ class Penjualan extends Model
 
     public function user() 
     { 
-        return $this->belongsTo(User::class, 'user_id'); 
+        return $this->belongsTo(User::class, 'user_id')->withTrashed(); 
     }
 
     public function approver() 
     { 
-        return $this->belongsTo(User::class, 'approved_by'); 
+        return $this->belongsTo(User::class, 'approved_by')->withTrashed(); 
     }
 
     public function details() 
     { 
         return $this->hasMany(PenjualanDetail::class); 
+    }
+
+    public function pengirimans()
+    {
+        return $this->hasMany(Pengiriman::class, 'penjualan_id');
     }
 }

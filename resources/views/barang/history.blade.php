@@ -143,7 +143,7 @@
                     </h6>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
+                    <div class="table-responsive d-none d-lg-block">
                         <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;" width="100%" cellspacing="0">
                             <thead class="table-custom-header">
                                 <tr>
@@ -227,6 +227,82 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    {{-- MOBILE CARDS --}}
+                    <div class="d-lg-none p-3 bg-light">
+                        @forelse($histories as $history)
+                            @php
+                                $keterangan = strtolower($history->keterangan ?? '');
+                                $isRusak = str_contains($keterangan, 'rusak') || str_contains($keterangan, 'cacat');
+                                $kategoriMentah = strtoupper(str_replace('_', ' ', $history->event_label));
+                                if ($kategoriMentah === 'RETUR CUSTOMER' || $kategoriMentah === 'RETURN CUSTOMER') {
+                                    $kategoriTampil = 'RETURN PENJUALAN';
+                                } elseif ($kategoriMentah === 'RETUR SUPPLIER' || $kategoriMentah === 'RETURN SUPPLIER') {
+                                    $kategoriTampil = 'RETURN PEMBELIAN';
+                                } else {
+                                    $kategoriTampil = $kategoriMentah;
+                                }
+                            @endphp
+                            <div class="card card-custom mb-3 overflow-hidden" style="border-radius: 12px; border-left: 4px solid {{ $history->change > 0 ? '#10b981' : ($history->change < 0 ? '#f43f5e' : '#64748b') }} !important;">
+                                <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e2e8f0;">
+                                    <span class="badge badge-secondary-soft text-uppercase fw-bold" style="font-size: 0.7rem;">{{ $kategoriTampil }}</span>
+                                    <span class="text-slate-muted small" style="font-size: 0.75rem;"><i class="far fa-calendar-alt me-1"></i> {{ $history->created_at->format('d M Y H:i') }}</span>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <span class="small text-muted d-block" style="font-size: 0.65rem;">Referensi Event:</span>
+                                            <span class="fw-bold text-slate-dark">{{ $history->event_reference ?? '-' }}</span>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="small text-muted d-block" style="font-size: 0.65rem;">Mutasi Stok:</span>
+                                            @if($history->change > 0)
+                                                <span class="badge badge-success-soft px-2 py-0.5 fw-bold" style="font-size: 0.75rem;">+{{ $history->change }} Pcs</span>
+                                            @elseif($history->change < 0)
+                                                <span class="badge badge-rose-soft px-2 py-0.5 fw-bold" style="font-size: 0.75rem;">{{ $history->change }} Pcs</span>
+                                            @else
+                                                <span class="badge badge-secondary-soft px-2 py-0.5 fw-bold" style="font-size: 0.75rem;">0 Pcs</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <div class="p-2 bg-light rounded text-center border">
+                                                <span class="d-block text-muted mb-1" style="font-size: 0.65rem;">Stok Fisik</span>
+                                                @if($isRusak)
+                                                    <span class="badge badge-rose-soft px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;"><i class="fas fa-heart-broken me-1"></i> Rusak</span>
+                                                @else
+                                                    <span class="badge badge-emerald-soft px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;"><i class="fas fa-box me-1"></i> Bagus</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-2 bg-light rounded text-center border">
+                                                <span class="d-block text-muted mb-1" style="font-size: 0.65rem;">Alur Perubahan</span>
+                                                <span class="text-slate-dark fw-bold" style="font-size: 0.8rem;">
+                                                    {{ $history->stock_before }} <i class="fas fa-arrow-right text-muted mx-1" style="font-size: 0.65rem;"></i> {{ $history->stock_after }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-light p-2.5 rounded-3 border">
+                                        <small class="text-muted d-block" style="font-size: 0.65rem; margin-bottom: 2px;">Keterangan / Catatan Admin:</small>
+                                        <span class="text-slate-dark fw-medium" style="font-size: 0.8rem;">{{ $history->keterangan ?? '-' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="card p-5 text-center text-slate-muted bg-white shadow-sm" style="border-radius: 12px;">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-clipboard fa-3x mb-3 text-muted opacity-25"></i>
+                                    <span class="fw-bold text-slate-dark mb-1">Belum Ada Riwayat Pergerakan Stok</span>
+                                    <span class="small">Log perubahan stok barang ini akan tampil di sini.</span>
+                                </div>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </div>

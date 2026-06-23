@@ -10,7 +10,7 @@ class ActivityLogController extends Controller
     public function index()
     {
         // Mengambil semua data log, diurutkan dari yang paling baru, batasi 50 per halaman
-        $logs = ActivityLog::with('user')->orderBy('created_at', 'desc')->paginate(50);
+        $logs = ActivityLog::with('user')->orderBy('created_at', 'asc')->paginate(50);
         
         return view('activity_log.index', compact('logs'));
     }

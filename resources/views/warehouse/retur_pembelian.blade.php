@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 
 <style>
     /* Global Overrides untuk Tema Premium Mentari Atlas */
@@ -44,9 +42,9 @@
             <h1 class="h3 mb-0 text-slate-dark fw-bold"><i class="fas fa-truck-loading text-rose-custom me-2"></i>Return Pembelian & Debit Note</h1>
             <p class="text-slate-muted small mb-0 mt-1">Kelola pengembalian cacat fisik ke Supplier atau klaim potongan tagihan utang (Debit Note).</p>
         </div>
-        <button class="btn btn-rose-custom shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalTambahReturBeli">
+        <a href="{{ route('retur.pembelian.create') }}" class="btn btn-rose-custom shadow-sm rounded-pill px-4">
             <i class="fas fa-plus me-1"></i> Catat Return ke Supplier
-        </button>
+        </a>
     </div>
 
     {{-- ALERT NOTIFIKASI --}}
@@ -66,7 +64,7 @@
 
     {{-- TABEL RIWAYAT KLAIM --}}
     <h6 class="fw-bold text-slate-dark mb-3"><i class="fas fa-history me-2 text-rose-custom"></i>Riwayat Return & Pemotongan Utang Dagang</h6>
-    <div class="table-wrapper-mentari">
+    <div class="table-wrapper-mentari d-none d-lg-block">
         <div class="table-responsive">
             {{-- MENGGUNAKAN TEMA MERAH KHUSUS UTANG/SUPPLIER --}}
             <table class="table table-mentari align-middle mb-0" style="font-size: 0.85rem; width: 100%;">
@@ -82,44 +80,51 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($returs as $retur)
-                    <tr>
-                        <td class="ps-4 fw-bold text-rose-custom">{{ $retur->no_retur_beli }}</td>
-                        <td>
-                            <span class="badge badge-secondary-soft rounded-pill px-2 py-1 shadow-sm mb-1 d-inline-block">{{ $retur->pembelian->no_pembelian ?? 'N/A' }}</span><br>
-                            <span class="small fw-semibold text-slate-dark"><i class="fas fa-building me-1 text-slate-muted"></i> {{ $retur->nama_supplier ?? 'N/A' }}</span>
-                        </td>
-                        <td class="fw-bold text-slate-dark">{{ $retur->barang->nama_barang ?? 'N/A' }}</td>
-                        <td class="text-center fw-bold">{{ $retur->qty_retur }}</td>
-                        <td>
-                            <span class="text-slate-dark small fw-bold">
-                                <i class="fas fa-file-invoice-dollar me-1 text-rose-custom"></i>Rp {{ number_format($retur->nominal_potongan, 0, ',', '.') }}
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            @if($retur->status_retur === 'pending')
-                                <span class="badge badge-warning-soft px-2 py-1 rounded-pill"><i class="fas fa-clock me-1"></i>Tertunda</span>
-                            @else
-                                <span class="badge badge-success-soft px-2 py-1 rounded-pill"><i class="fas fa-check-circle me-1"></i>Selesai</span>
+                    @forelse($returs as $noRetur => $group)
+                        @php $rowCount = count($group); @endphp
+                        @foreach($group as $index => $retur)
+                        <tr>
+                            @if($index === 0)
+                            <td class="ps-4 fw-bold text-rose-custom align-middle" rowspan="{{ $rowCount }}">{{ $retur->no_retur_beli }}</td>
+                            <td class="align-middle" rowspan="{{ $rowCount }}">
+                                <span class="badge badge-secondary-soft rounded-pill px-2 py-1 shadow-sm mb-1 d-inline-block">{{ $retur->pembelian->no_pembelian ?? 'N/A' }}</span><br>
+                                <span class="small fw-semibold text-slate-dark"><i class="fas fa-building me-1 text-slate-muted"></i> {{ $retur->nama_supplier ?? 'N/A' }}</span>
+                            </td>
                             @endif
-                        </td>
-                        <td class="text-center pe-4">
-                            @if($retur->status_retur === 'pending')
-                                <form action="{{ route('retur.pembelian.eksekusi', $retur->id) }}" method="POST" class="d-inline-block">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-warning fw-bold text-dark shadow-sm rounded-pill" onclick="return confirm('Eksekusi Return ini? Sistem akan memotong Stok Karantina/Rusak dan menagihkan Debit Note secara otomatis ke tagihan Supplier.')">
-                                        <i class="fas fa-bolt me-1"></i> Return Sekarang
+                            <td class="fw-bold text-slate-dark">
+                                {{ $retur->barang->nama_barang ?? 'N/A' }}
+                            </td>
+                            <td class="text-center fw-bold">{{ $retur->qty_retur }}</td>
+                            <td>
+                                <span class="text-slate-dark small fw-bold">
+                                    <i class="fas fa-file-invoice-dollar me-1 text-rose-custom"></i>Rp {{ number_format($retur->nominal_potongan, 0, ',', '.') }}
+                                </span>
+                            </td>
+                            @if($index === 0)
+                            <td class="text-center align-middle" rowspan="{{ $rowCount }}">
+                                @if($retur->status_retur === 'pending')
+                                    <span class="badge badge-warning-soft px-2 py-1 rounded-pill"><i class="fas fa-clock me-1"></i>Tertunda</span>
+                                @else
+                                    <span class="badge badge-success-soft px-2 py-1 rounded-pill"><i class="fas fa-check-circle me-1"></i>Selesai</span>
+                                @endif
+                            </td>
+                            <td class="text-center pe-4 align-middle" rowspan="{{ $rowCount }}">
+                                @if($retur->status_retur === 'pending')
+                                    <form action="{{ route('retur.pembelian.eksekusi', $retur->id) }}" method="POST" class="d-inline-block">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-warning fw-bold text-dark shadow-sm rounded-pill" onclick="return confirm('Eksekusi Return ini? Sistem akan memotong Stok Karantina/Rusak dan menagihkan Debit Note secara otomatis ke tagihan Supplier.')">
+                                            <i class="fas fa-bolt me-1"></i> Return Sekarang
+                                        </button>
+                                    </form>
+                                @else
+                                    <button class="btn btn-sm btn-light border fw-bold text-secondary shadow-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#modalDetailRetur{{ $retur->id }}">
+                                        <i class="fas fa-eye me-1"></i> Lihat Detail
                                     </button>
-                                </form>
-                            @else
-                                <button class="btn btn-sm btn-light border fw-bold text-secondary shadow-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#modalDetailRetur{{ $retur->id }}">
-                                    <i class="fas fa-eye me-1"></i> Lihat Detail
-                                </button>
+                                @endif
+                            </td>
                             @endif
-                        </td>
-                    </tr>
-
-                    </tr>
+                        </tr>
+                        @endforeach
                     @empty
                     <tr>
                         <td colspan="7" class="text-center py-5 text-slate-muted bg-white">
@@ -135,94 +140,94 @@
             </table>
         </div>
     </div>
-</div>
 
-{{-- MODAL TAMBAH KLAIM RETURN PEMBELIAN --}}
-<div class="modal fade" id="modalTambahReturBeli" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"> 
-        <form action="{{ route('retur.pembelian.store') }}" method="POST" class="modal-content border-0 shadow-lg" style="border-radius: 1rem; overflow: hidden;">
-            @csrf
-            {{-- Header modal disesuaikan jadi merah --}}
-            <div class="modal-header bg-rose-custom text-white border-0 py-3">
-                <h5 class="modal-title fw-bold"><i class="fas fa-undo me-2"></i>Catat Return / Debit Note ke Supplier</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4 bg-light">
-                
-                <div class="card border-0 shadow-sm mb-3">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-slate-dark">Pilih Nota Pembelian (PO) *</label>
-                            <select name="pembelian_id" id="pembelian_id" class="form-select border-secondary-subtle select2-search" required style="width: 100%;">
-                                <option value="" disabled selected>-- Ketik untuk Mencari Nota PO --</option>
-                                @foreach($pembelians as $p)
-                                    <option value="{{ $p->id }}">{{ $p->no_pembelian }} - {{ $p->nama_supplier }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="mb-0">
-                            <label class="form-label small fw-bold text-slate-dark">Pilih Produk Terkait *</label>
-                            <select name="barang_id" id="barang_id" class="form-select border-secondary-subtle select2-search" required style="width: 100%;">
-                                <option value="" disabled selected>-- Pilih PO Terlebih Dahulu --</option>
-                            </select>
-                        </div>
-                    </div>
+    {{-- MOBILE CARDS --}}
+    <div class="d-lg-none p-2" id="retur-beli-mobile-list">
+        @forelse($returs as $noRetur => $group)
+            @php 
+                $retur = $group->first(); 
+                $totalQty = $group->sum('qty_retur');
+                $totalNominal = $group->sum('nominal_potongan');
+                $namaBarangArray = $group->pluck('barang.nama_barang')->unique()->toArray();
+            @endphp
+            <div class="card card-custom mb-3" style="border-left: 4px solid #f43f5e !important;">
+                <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e2e8f0;">
+                    <span class="fw-bold text-rose-custom" style="font-size: 0.85rem;"><i class="fas fa-undo me-1"></i> {{ $retur->no_retur_beli }}</span>
+                    <span class="badge badge-secondary-soft rounded-pill px-2 py-0.5" style="font-size: 0.65rem;">{{ $retur->pembelian->no_pembelian ?? 'N/A' }}</span>
                 </div>
+                <div class="card-body p-3">
+                    <h6 class="fw-bold text-slate-dark mb-1" style="font-size: 1rem;">
+                        {{ implode(', ', $namaBarangArray) }}
+                        @if(count($group) > 1)
+                            <br><span class="badge badge-info-soft rounded-pill px-2 py-0 mt-1" style="font-size: 0.65rem;">Multi-Item Group</span>
+                        @endif
+                    </h6>
+                    <div class="text-muted mb-3" style="font-size: 0.8rem;">
+                        <i class="fas fa-building me-1"></i> Supplier: <strong>{{ $retur->nama_supplier ?? 'N/A' }}</strong>
+                    </div>
 
-                <div class="card border-0 shadow-sm mb-3">
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-slate-dark">Jenis Klaim Return Supplier *</label>
-                            <select name="jenis_retur" id="jenis_retur_beli" class="form-select border-secondary-subtle select2-no-search" required style="width: 100%;">
-                                <option value="fisik" selected>📦 Return Fisik (Kembalikan barang dan stok)</option>
-                                <option value="harga_debit_note">🏷️ Debit Note (Hanya Potong Utang)</option>
-                            </select>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded text-center border">
+                                <span class="d-block text-muted" style="font-size: 0.65rem;">Qty Return</span>
+                                <span class="fw-bold text-slate-dark" style="font-size: 0.85rem;">{{ $retur->qty_retur }} Pcs</span>
+                            </div>
                         </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold text-slate-dark">Jumlah (Qty) *</label>
-                                <div class="input-group">
-                                    <input type="number" name="qty_retur" class="form-control border-secondary-subtle" min="1" placeholder="0" required>
-                                    <span class="input-group-text bg-white border-secondary-subtle text-muted">Pcs</span>
-                                </div>
-                            </div>
-
-                            {{-- INPUT KONDISI FISIK (DINAMIS) --}}
-                            <div class="col-md-6" id="div_kondisi_fisik_beli">
-                                <label class="form-label small fw-bold text-slate-dark">Kondisi Fisik *</label>
-                                <select name="status_kondisi" id="status_kondisi_beli" class="form-select border-secondary-subtle select2-no-search" style="width: 100%;">
-                                    <option value="" disabled selected>-- Pilih Kondisi Barang --</option>
-                                    <option value="bagus">🟢 Bagus (Keluarkan dari Stok Bagus)</option>
-                                    <option value="rusak">🔴 Rusak (Keluarkan dari Stok Rusak)</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6 d-none" id="div_potongan_beli">
-                                <label class="form-label small fw-bold text-slate-dark">Nominal Debit Note (Rp) *</label>
-                                <input type="number" name="nominal_potongan" class="form-control border-secondary-subtle" placeholder="Contoh: 350000">
-                                <small class="text-muted" style="font-size: 11px;">Nominal dipotong dari utang.</small>
+                        <div class="col-6">
+                            <div class="p-2 bg-rose-subtle rounded text-center border border-rose-subtle">
+                                <span class="d-block text-rose-custom" style="font-size: 0.65rem;">Potongan (DN)</span>
+                                <span class="fw-bold text-rose-custom" style="font-size: 0.85rem;">Rp {{ number_format($retur->nominal_potongan, 0, ',', '.') }}</span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="mb-0">
-                    <label class="form-label small fw-bold text-slate-dark">Alasan / Deskripsi Klaim *</label>
-                    <textarea name="alasan" class="form-control border-secondary-subtle shadow-sm" rows="3" placeholder="Contoh: Barang cacat pabrik, salah pengiriman varian, dll." required></textarea>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            @if($retur->status_retur === 'pending')
+                                <span class="badge badge-warning-soft px-2 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;"><i class="fas fa-clock me-1"></i>Tertunda</span>
+                            @else
+                                <span class="badge badge-success-soft px-2 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;"><i class="fas fa-check-circle me-1"></i>Selesai</span>
+                            @endif
+                        </div>
+                        <div>
+                            @if($retur->status_retur === 'pending')
+                                <form action="{{ route('retur.pembelian.eksekusi', $retur->id) }}" method="POST" class="d-inline-block">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-warning fw-bold text-dark shadow-sm rounded-pill" style="font-size: 0.75rem;" onclick="return confirm('Eksekusi Return ini? Sistem akan memotong Stok Karantina/Rusak dan menagihkan Debit Note secara otomatis ke tagihan Supplier.')">
+                                        <i class="fas fa-bolt me-1"></i> Return Sekarang
+                                    </button>
+                                </form>
+                            @else
+                                <button class="btn btn-sm btn-light border fw-bold text-secondary shadow-sm rounded-pill" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#modalDetailRetur{{ $retur->id }}">
+                                    <i class="fas fa-eye me-1"></i> Lihat Detail
+                                </button>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer bg-white border-top-0 py-3">
-                <button type="button" class="btn btn-light fw-bold shadow-sm" data-bs-dismiss="modal">Batal</button>
-                <button type="submit" class="btn btn-rose-custom fw-bold shadow-sm px-4" onclick="return confirm('Konfirmasi: Proses klaim return ini? Stok dan Utang Dagang Anda akan disesuaikan otomatis oleh sistem.')">Simpan & Proses Return</button>
+        @empty
+            <div class="card card-custom p-5 text-center text-slate-muted bg-white mb-3">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="fas fa-undo d-block fa-3x mb-3 text-rose-custom opacity-25"></i>
+                    <span class="fw-bold text-slate-dark mb-1">Belum Ada Data Return Supplier</span>
+                    <span class="small">Data barang yang dikembalikan ke supplier akan tercatat di sini.</span>
+                </div>
             </div>
-        </form>
+        @endforelse
     </div>
 </div>
 
+
+
 {{-- MODAL DETAIL RETUR PEMBELIAN --}}
-@foreach($returs as $retur)
+@foreach($returs as $noRetur => $group)
+    @php 
+        $retur = $group->first(); 
+        $totalQty = $group->sum('qty_retur');
+        $totalNominal = $group->sum('nominal_potongan');
+        $alasanGabungan = $group->pluck('alasan')->filter()->implode(', ');
+    @endphp
 <div class="modal fade" id="modalDetailRetur{{ $retur->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"> 
         <div class="modal-content border-0 shadow-lg" style="border-radius: 1rem; overflow: hidden;">
@@ -254,7 +259,7 @@
                                     <span class="text-warning small fw-bold"><i class="fas fa-pause-circle me-1"></i>Menunggu Eksekusi</span><br>
                                     <span class="text-slate-muted" style="font-size: 10px;">(Akan memotong Stok: {{ ucfirst($retur->status_kondisi) }})</span>
                                 @else
-                                    <span class="text-danger small fw-bold"><i class="fas fa-minus-circle me-1"></i>Keluar Gudang (-{{ $retur->qty_retur }})</span><br>
+                                    <span class="text-danger small fw-bold"><i class="fas fa-minus-circle me-1"></i>Keluar Gudang (-{{ $totalQty }})</span><br>
                                     <span class="text-slate-muted" style="font-size: 10px;">(Dari Stok: {{ ucfirst($retur->status_kondisi) }})</span>
                                 @endif
                             @else
@@ -262,9 +267,15 @@
                             @endif
                         </span>
                     </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <span class="text-slate-muted fw-bold">Dampak Ke Utang</span>
+                        <span class="text-end fw-bold text-success">
+                            <i class="fas fa-file-invoice-dollar me-1"></i> (DN) Potong Utang Rp {{ number_format($totalNominal, 0, ',', '.') }}
+                        </span>
+                    </li>
                     <li class="list-group-item py-3">
                         <span class="text-slate-muted fw-bold d-block mb-1">Alasan / Keterangan</span>
-                        <p class="mb-0 text-slate-dark">{{ $retur->alasan ?? '-' }}</p>
+                        <p class="mb-0 text-slate-dark">{{ $alasanGabungan ?: '-' }}</p>
                     </li>
                 </ul>
             </div>
@@ -276,103 +287,5 @@
 </div>
 @endforeach
 
-<script>
-    function toggleReturBeliJenis() {
-        var jenis = $('#jenis_retur_beli').val();
-        
-        var divPotongan = document.getElementById('div_potongan_beli');
-        var inputNominal = document.getElementsByName('nominal_potongan')[0];
-        
-        var divKondisi = document.getElementById('div_kondisi_fisik_beli');
-        var inputKondisi = $('#status_kondisi_beli');
 
-        if (jenis === 'harga_debit_note') {
-            // Tampilkan Debit Note, Sembunyikan Kondisi Fisik
-            divPotongan.classList.remove('d-none');
-            inputNominal.removeAttribute('readonly');
-            inputNominal.setAttribute('required', 'required');
-            if(inputNominal.value === '0') inputNominal.value = ''; 
-            
-            divKondisi.classList.add('d-none');
-            inputKondisi.removeAttr('required');
-            inputKondisi.val(null).trigger('change');
-            
-        } else if (jenis === 'fisik') {
-            // Sembunyikan Debit Note, Tampilkan Kondisi Fisik
-            divPotongan.classList.add('d-none');
-            inputNominal.removeAttribute('required');
-            inputNominal.setAttribute('readonly', 'readonly'); 
-            inputNominal.value = '0'; 
-            
-            divKondisi.classList.remove('d-none');
-            inputKondisi.attr('required', 'required');
-        }
-    }
-
-    $(document).ready(function() {
-        // Inisialisasi Select2 dengan Search
-        $('#pembelian_id').select2({
-            dropdownParent: $('#modalTambahReturBeli'),
-            placeholder: "-- Ketik untuk Mencari Nota PO --",
-            allowClear: true
-        });
-        
-        $('#barang_id').select2({
-            dropdownParent: $('#modalTambahReturBeli'),
-            placeholder: "-- Pilih PO Terlebih Dahulu --"
-        });
-
-        // Inisialisasi Select2 TANPA Search
-        $('.select2-no-search').select2({
-            dropdownParent: $('#modalTambahReturBeli'),
-            minimumResultsForSearch: Infinity
-        });
-
-        // Listener jika Select2 Jenis Klaim diubah
-        $('#jenis_retur_beli').on('change', function() {
-            toggleReturBeliJenis();
-        });
-        toggleReturBeliJenis(); // Panggil fungsi di awal
-
-        // Event listener saat PO dipilih
-        $('#pembelian_id').on('select2:select', function (e) {
-            let po_id = $(this).val();
-            let barangSelect = $('#barang_id');
-            
-            barangSelect.empty().append('<option value="" disabled selected>🔄 Memuat barang...</option>').trigger('change');
-
-            if(po_id) {
-                fetch('/get-items-po/' + po_id)
-                    .then(response => response.json())
-                    .then(data => {
-                        barangSelect.empty();
-                        
-                        if(data.length > 0) {
-                            data.forEach(item => {
-                                let qty = item.jumlah_diajukan || item.qty || item.jumlah_beli || 0;
-                                let newOption = new Option(item.barang.nama_barang + ' (Diterima: ' + qty + ' Pcs)', item.barang_id, false, false);
-                                barangSelect.append(newOption);
-                            });
-                            
-                            // Otomatis pilih barang pertama
-                            barangSelect.val(data[0].barang_id).trigger('change');
-                        } else {
-                            barangSelect.append('<option value="" disabled selected>-- Tidak ada barang di PO ini --</option>').trigger('change');
-                        }
-                    })
-                    .catch(error => {
-                        barangSelect.empty().append('<option value="" disabled selected>❌ Gagal memuat data</option>').trigger('change');
-                        console.error('Error:', error);
-                    });
-            }
-        });
-    });
-
-    var modalTambahReturBeli = document.getElementById('modalTambahReturBeli');
-    if (modalTambahReturBeli) {
-        modalTambahReturBeli.addEventListener('shown.bs.modal', function () {
-            toggleReturBeliJenis();
-        });
-    }
-</script>
 @endsection

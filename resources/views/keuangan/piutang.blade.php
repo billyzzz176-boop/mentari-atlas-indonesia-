@@ -68,7 +68,7 @@
     @endif
 
     {{-- KONTEN UTAMA JURNAL PIUTANG --}}
-    <div class="table-wrapper-mentari">
+    <div class="table-wrapper-mentari d-none d-lg-block">
         <div class="table-responsive">
             <table class="table table-mentari table-mentari-compact align-middle mb-0" style="font-size: 0.8rem; width: 100%;">
                 <thead>
@@ -202,6 +202,86 @@
                 @endif
             </table>
         </div>
+    </div>
+
+    {{-- MOBILE CARDS --}}
+    <div class="d-lg-none p-2">
+        @forelse($piutangs as $p)
+            @php
+                $listKataKunciCN = ['Credit Note', 'Credit Note / Retur Customer', 'Retur Customer / Credit Note', 'Retur Customer'];
+                $totalCN = $p->pembayarans ? $p->pembayarans->whereIn('metode_pembayaran', $listKataKunciCN)->sum('jumlah_bayar') : 0;
+                $piutangBersih = $p->total_tagihan; 
+                $tagihanAwal = $piutangBersih + $totalCN; 
+                $sisaPiutang = $p->total_tagihan - $p->total_dibayar;
+                $status = strtolower($p->status_bayar);
+            @endphp
+            <div class="card card-custom mb-3 border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="card-header bg-white border-bottom-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-bold text-blue-custom d-block">{{ $p->no_invoice }}</span>
+                        <span class="text-slate-muted" style="font-size: 0.75rem;"><i class="fas fa-file-alt me-1"></i>{{ $p->penjualan->no_so ?? '-' }}</span>
+                    </div>
+                    <div>
+                        @if($status === 'lunas' || $sisaPiutang <= 0)
+                            <span class="badge badge-success-soft px-2 py-1 rounded-pill shadow-sm">Lunas</span>
+                        @elseif($status === 'cicil')
+                            <span class="badge badge-warning-soft px-2 py-1 rounded-pill shadow-sm">Cicil</span>
+                        @else
+                            <span class="badge badge-danger-soft px-2 py-1 rounded-pill shadow-sm">Belum Bayar</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="card-body py-2">
+                    <div class="mb-2">
+                        <span class="fw-bold text-slate-dark d-block" style="font-size: 0.9rem;">{{ $p->penjualan->customer->nama_customer ?? '-' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                        <span class="text-slate-muted">Tagihan Awal</span>
+                        <span class="font-monospace-custom text-slate-dark">Rp {{ number_format($tagihanAwal, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                        <span class="text-slate-muted">Potongan CN</span>
+                        <span class="font-monospace-custom {{ $totalCN > 0 ? 'text-warning' : 'text-slate-muted opacity-50' }}">Rp {{ number_format($totalCN, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem; background-color: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px;">
+                        <span class="text-slate-dark fw-bold">Piutang Bersih</span>
+                        <span class="font-monospace-custom text-slate-dark fw-bold">Rp {{ number_format($piutangBersih, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                        <span class="text-slate-muted">Uang Terbayar</span>
+                        <span class="font-monospace-custom text-success">Rp {{ number_format($p->total_dibayar, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 mt-2 pt-2" style="font-size: 0.85rem; border-top: 1px dashed #e2e8f0;">
+                        <span class="text-slate-dark fw-bold">Sisa Piutang</span>
+                        <span class="font-monospace-custom {{ $sisaPiutang > 0 ? 'text-danger fw-bold' : 'text-slate-muted' }}">
+                            @if($status === 'lunas' || $sisaPiutang <= 0)
+                                <i class="fas fa-check text-success"></i> Rp 0
+                            @else
+                                Rp {{ number_format($sisaPiutang, 0, ',', '.') }}
+                            @endif
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0 pb-3 pt-0">
+                    <div class="d-flex gap-2">
+                        @if($status !== 'lunas' && $sisaPiutang > 0)
+                            <button type="button" class="btn btn-sm btn-potongan-cn flex-fill shadow-sm fw-bold" style="background-color: #fde68a; color: #92400e; border: 1px solid #fcd34d;" 
+                                    data-id="{{ $p->penjualan_id }}" data-customer="{{ $p->penjualan->customer->nama_customer ?? '-' }}">
+                                <i class="fas fa-cut me-1"></i> Potong CN
+                            </button>
+                        @endif
+                        <a href="{{ route('keuangan.piutang.show', $p->id) }}" class="btn btn-sm btn-blue-custom flex-fill shadow-sm">
+                            <i class="fas fa-eye me-1"></i> Detail
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="text-center py-5 bg-white rounded-3 shadow-sm border border-slate-100">
+                <i class="fas fa-folder-open fa-3x mb-3 opacity-25 text-blue-custom"></i>
+                <span class="d-block fw-bold text-slate-muted">Belum Ada Data Piutang</span>
+            </div>
+        @endforelse
     </div>
 </div>
 

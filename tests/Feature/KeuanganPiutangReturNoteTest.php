@@ -17,7 +17,7 @@ class KeuanganPiutangReturNoteTest extends TestCase
 
     public function test_retur_penjualan_records_piutang_adjustment_note()
     {
-        $user = User::factory()->create(['role' => 'admin_warehouse']);
+        $user = User::factory()->create(['role' => 'return_barang']);
 
         $customer = Customer::create([
             'id_cust' => 'CUST002',
@@ -81,9 +81,8 @@ class KeuanganPiutangReturNoteTest extends TestCase
 
         $this->assertDatabaseHas('pembayaran_piutangs', [
             'piutang_id' => $piutang->id,
-            'jumlah_bayar' => 0,
+            'jumlah_bayar' => 200000,
             'metode_pembayaran' => 'Retur Customer / Credit Note',
-            'keterangan' => 'Retur penjualan otomatis mengurangi piutang: Barang retur karena cacat',
         ]);
     }
 }

@@ -3,11 +3,11 @@
 @section('content')
 <div class="container py-3">
     <div class="card shadow-sm border-0 rounded-3">
-        <div class="card-header bg-light border-bottom py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-light border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <h5 class="mb-0 fw-bold text-dark">
                 Edit Sales Order: <span class="text-primary">{{ $penjualan->no_so }}</span>
             </h5>
-            <a href="{{ route('penjualan.index') }}" class="btn btn-sm btn-secondary fw-bold shadow-sm">
+            <a href="{{ route('penjualan.index') }}" class="btn btn-sm btn-secondary fw-bold shadow-sm text-nowrap">
                 <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar
             </a>
         </div>
@@ -46,7 +46,7 @@
                             </button>
                         </div>
 
-                        <div class="table-responsive">
+                        <div class="table-responsive d-none d-lg-block">
                             <table class="table table-borderless align-middle mb-0" style="font-size: 0.85rem;">
                                 <thead>
                                     <tr class="text-dark fw-bold">
@@ -85,6 +85,37 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                        </div>
+
+                        {{-- MOBILE CARDS FOR ITEMS --}}
+                        <div class="d-lg-none mt-3">
+                            @foreach($penjualan->details as $detail)
+                            <div class="card mb-3 shadow-sm border-0" style="border-radius: 12px; border: 1px solid #e2e8f0 !important;">
+                                <div class="card-body p-3 bg-light" style="border-radius: 12px;">
+                                    <input type="hidden" name="detail_id[]" value="{{ $detail->id }}">
+                                    <input type="hidden" name="barang_id[]" value="{{ $detail->barang_id }}">
+                                    <div class="fw-bold text-slate-dark mb-1">{{ $detail->barang->kode_barang }} - {{ $detail->barang->nama_barang }}</div>
+                                    <hr class="my-2 opacity-10">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem;">Harga Awal</label>
+                                            <input type="number" name="harga_awal[]" class="form-control form-control-sm text-end fw-bold" 
+                                                   value="{{ $detail->harga_awal ?? $detail->barang->harga_jual }}" min="0" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem;">Harga Akhir</label>
+                                            <input type="number" name="harga_satuan[]" class="form-control form-control-sm text-end fw-bold" 
+                                                   value="{{ $detail->harga_satuan }}" min="0" required>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem;">Qty</label>
+                                            <input type="number" name="jumlah[]" class="form-control form-control-sm text-center fw-bold text-primary" 
+                                                   value="{{ $detail->jumlah }}" min="1" required style="font-size: 1rem;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
                         </div>
 
                         <div class="text-end mt-4 pt-3 border-top">

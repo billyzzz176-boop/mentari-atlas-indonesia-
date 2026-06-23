@@ -22,7 +22,7 @@ class BarangController extends Controller
                   ->orWhere('nama_barang', 'like', "%{$search}%");
         }
 
-        $barangs = $query->orderBy('kode_barang', 'asc')->get();
+        $barangs = $query->orderBy('kode_barang', 'asc')->paginate(50)->withQueryString();
         
         return view('barang.index', compact('barangs', 'search'));
     }

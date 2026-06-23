@@ -112,6 +112,73 @@
         /* Sembunyikan div filter date agar rapi di print */
         #customDateRange { display: none !important; }
     }
+            /* Fix untuk Nav Tabs Mobile menampilkan 3 judul sekaligus */
+      @media (max-width: 991.98px) {
+          .nav-tabs-custom {
+              justify-content: flex-start;
+              scroll-snap-type: x mandatory;
+              gap: 0;
+          }
+          .nav-tabs-custom .nav-item {
+              flex: 0 0 33.3333%;
+              scroll-snap-align: start;
+          }
+          .nav-tabs-custom .nav-link {
+              width: 100%;
+              padding: 0.75rem 0.25rem;
+              font-size: 0.8rem;
+              text-align: center;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              border-radius: 0;
+          }
+          .nav-tabs-custom .nav-link i {
+              display: none; /* Sembunyikan icon supaya teks muat */
+          }
+      }
+      /* Fix untuk Nav Tabs Mobile menampilkan 3 judul sekaligus */
+      @media (max-width: 991.98px) {
+          .nav-tabs-custom {
+              justify-content: flex-start;
+              scroll-snap-type: x mandatory;
+              gap: 0;
+          }
+          .nav-tabs-custom .nav-item {
+              flex: 0 0 33.3333%;
+              scroll-snap-align: start;
+          }
+          .nav-tabs-custom .nav-link {
+              width: 100%;
+              padding: 0.75rem 0.25rem;
+              font-size: 0.8rem;
+              text-align: center;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              border-radius: 0;
+          }
+          .nav-tabs-custom .nav-link i {
+              display: none; /* Sembunyikan icon supaya teks muat */
+          }
+      }
+      /* ============================================================ */
+      /* MOBILE CARD LAYOUT (< lg breakpoint) */
+      /* ============================================================ */
+      .card-custom { background: #fff; border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 1rem; transition: box-shadow 0.2s; }
+      .card-custom:hover { box-shadow: 0 6px 16px rgba(16,185,129,0.12); }
+      .card-custom .card-header-mobile { background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; }
+      .card-custom .card-header-mobile.pembelian-header { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+      .card-custom .card-header-mobile.supplier-header { background: linear-gradient(135deg, #64748b 0%, #334155 100%); }
+      .card-custom .card-body-mobile { padding: 0.85rem 1rem; }
+      .card-custom .data-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.82rem; }
+      .card-custom .data-row:last-child { border-bottom: none; }
+      .card-custom .data-label { color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px; }
+      .card-custom .data-value { color: #0f172a; font-weight: 500; text-align: right; max-width: 60%; }
+      .card-custom .laba-positif { color: #10b981 !important; font-weight: 700; }
+      .card-custom .laba-negatif { color: #ef4444 !important; font-weight: 700; }
+      .card-custom .pengeluaran-val { color: #f59e0b !important; font-weight: 700; }
+      .card-custom .card-action-mobile { padding: 0.65rem 1rem; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; }
 </style>
 
 <div class="container-fluid py-4">
@@ -260,7 +327,7 @@
     {{-- CHART VISUALIZATION GACOR --}}
     @if($labaSales->count() > 0 || $labaProduk->count() > 0)
     <div class="row mb-4">
-        <div class="col-md-6 mb-3 mb-md-0">
+        <div class="col-md-6 mb-4 mb-md-0">
             <div class="card card-custom bg-white border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="fw-bold text-slate-dark mb-3"><i class="fas fa-chart-bar text-emerald me-2"></i>Top 5 Sales Pencetak Laba</h6>
@@ -270,7 +337,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 mb-4 mb-md-0">
             <div class="card card-custom bg-white border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="fw-bold text-slate-dark mb-3"><i class="fas fa-chart-pie text-emerald me-2"></i>Top 5 Produk Paling Menguntungkan</h6>
@@ -285,7 +352,7 @@
 
     @if($labaMerek->count() > 0 || $labaCustomer->count() > 0)
     <div class="row mb-4">
-        <div class="col-md-6 mb-3 mb-md-0">
+        <div class="col-md-6 mb-4 mb-md-0">
             <div class="card card-custom bg-white border-0 shadow-sm h-100">
                 <div class="card-body">
                     <h6 class="fw-bold text-slate-dark mb-3"><i class="fas fa-tags text-emerald me-2"></i>Top 5 Merek Paling Laris</h6>
@@ -312,14 +379,14 @@
     <div class="card card-custom bg-white border-0">
         <div class="card-header bg-white pt-3 pb-0 border-bottom-0">
             <ul class="nav nav-tabs nav-tabs-custom" id="labaTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="transaksi-tab" data-bs-toggle="tab" data-bs-target="#transaksi" type="button" role="tab"><i class="fas fa-file-invoice-dollar me-2"></i>Penjualan</button>
+                <li class="nav-item d-none d-lg-block" role="presentation">
+                      <button class="nav-link" id="transaksi-tab" data-bs-toggle="tab" data-bs-target="#transaksi" type="button" role="tab"><i class="fas fa-file-invoice-dollar me-2"></i>Penjualan</button>
+                </li>
+                <li class="nav-item d-none d-lg-block" role="presentation">
+                      <button class="nav-link" id="pembelian-tab" data-bs-toggle="tab" data-bs-target="#pembelian" type="button" role="tab"><i class="fas fa-shopping-cart me-2"></i>Pembelian</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="pembelian-tab" data-bs-toggle="tab" data-bs-target="#pembelian" type="button" role="tab"><i class="fas fa-shopping-cart me-2"></i>Pembelian</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab"><i class="fas fa-user-tie me-2"></i>Sales</button>
+                      <button class="nav-link active" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab"><i class="fas fa-user-tie me-2"></i>Sales</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="produk-tab" data-bs-toggle="tab" data-bs-target="#produk" type="button" role="tab"><i class="fas fa-box me-2"></i>Produk</button>
@@ -339,8 +406,8 @@
             <div class="tab-content" id="labaTabsContent">
                 
                 {{-- TAB 0: PER TRANSAKSI (BARU) --}}
-                <div class="tab-pane fade show active p-0" id="transaksi" role="tabpanel">
-                    <div class="table-responsive">
+                <div class="tab-pane fade p-0" id="transaksi" role="tabpanel">
+                    <div class="table-responsive d-none d-lg-block">
                         <table class="table table-laba w-100 mb-0">
                             <thead>
                                 <tr>
@@ -410,11 +477,64 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    {{-- MOBILE CARDS --}}
+                    <div class="d-lg-none p-2">
+                        @forelse($labaTransaksi as $index => $item)
+                        <div class="card card-custom mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="fw-bold text-slate-dark d-block">{{ $item->no_so }}</span>
+                                    <span class="text-slate-muted" style="font-size: 0.75rem;">{{ \Carbon\Carbon::parse($item->tanggal_so)->format('d/m/Y H:i') }}</span>
+                                </div>
+                                <div>
+                                    @if($index == 0) <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>#1</span>
+                                    @elseif($index == 1) <span class="badge bg-secondary"><i class="fas fa-medal me-1"></i>#2</span>
+                                    @elseif($index == 2) <span class="badge bg-dark text-white"><i class="fas fa-award me-1"></i>#3</span>
+                                    @else <span class="badge bg-light text-secondary">#{{ $index + 1 }}</span> @endif
+                                </div>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <span class="fw-bold text-slate-dark d-block" style="font-size: 0.9rem;">{{ $item->nama }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                    <span class="text-slate-muted">Pemasukan Akhir</span>
+                                    <span class="text-slate-dark fw-bold">Rp {{ number_format($item->omzet_awal - $item->omzet_retur, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                    <span class="text-slate-muted">Modal (HPP)</span>
+                                    <span class="text-danger">- Rp {{ number_format($item->total_hpp, 0, ',', '.') }}</span>
+                                </div>
+                                @if($item->qty_retur > 0)
+                                    @php $charge = max(0, $item->omzet_retur - $item->potongan_cn); @endphp
+                                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                        <span class="text-slate-muted">Charge (Retur: {{ $item->qty_retur }})</span>
+                                        <span class="{{ $charge > 0 ? 'text-emerald' : 'text-slate-muted' }} fw-bold">+ Rp {{ number_format($charge, 0, ',', '.') }}</span>
+                                    </div>
+                                @endif
+                                <div class="d-flex justify-content-between mt-2 pt-2" style="font-size: 0.85rem; border-top: 1px dashed #e2e8f0;">
+                                    <span class="text-slate-dark fw-bold">Laba Bersih</span>
+                                    <span class="fw-bold {{ $item->total_laba >= 0 ? 'text-emerald' : 'text-danger' }}">
+                                        {{ $item->total_laba >= 0 ? '+' : '' }} Rp {{ number_format($item->total_laba, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white border-top-0 pb-3 pt-0">
+                                <button type="button" class="btn btn-sm btn-outline-info w-100 rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#detailLabaModal{{ str_replace('-', '', $item->no_so) }}">
+                                    <i class="fas fa-search me-1"></i> Detail
+                                </button>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="text-center py-4 text-muted bg-white rounded shadow-sm border"><i class="fas fa-file-invoice fa-2x mb-2 d-block opacity-25"></i>Belum ada transaksi pada rentang waktu ini.</div>
+                        @endforelse
+                    </div>
                 </div>
 
                 {{-- TAB: PER PEMBELIAN --}}
                 <div class="tab-pane fade p-0" id="pembelian" role="tabpanel">
-                    <div class="table-responsive">
+                    <div class="table-responsive d-none d-lg-block">
                         <table class="table table-laba w-100 mb-0">
                             <thead>
                                 <tr>
@@ -472,11 +592,59 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    {{-- MOBILE CARDS --}}
+                    <div class="d-lg-none p-2">
+                        @forelse($labaPembelian as $index => $item)
+                        <div class="card card-custom mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="fw-bold text-slate-dark d-block">{{ $item->no_po }}</span>
+                                    <span class="text-slate-muted" style="font-size: 0.75rem;">{{ \Carbon\Carbon::parse($item->tanggal_po)->format('d/m/Y') }}</span>
+                                </div>
+                                <div>
+                                    @if($index == 0) <span class="badge bg-danger text-white"><i class="fas fa-exclamation-triangle me-1"></i>#1</span>
+                                    @elseif($index == 1) <span class="badge bg-warning text-dark"><i class="fas fa-exclamation me-1"></i>#2</span>
+                                    @elseif($index == 2) <span class="badge bg-secondary"><i class="fas fa-info me-1"></i>#3</span>
+                                    @else <span class="badge bg-light text-secondary">#{{ $index + 1 }}</span> @endif
+                                </div>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <span class="fw-bold text-slate-dark d-block" style="font-size: 0.9rem;"><i class="fas fa-truck text-secondary me-1"></i>{{ $item->nama }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                    <span class="text-slate-muted">Pengeluaran Awal</span>
+                                    <span class="text-slate-dark fw-bold">Rp {{ number_format($item->pengeluaran_awal, 0, ',', '.') }}</span>
+                                </div>
+                                @if($item->qty_retur > 0)
+                                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                        <span class="text-slate-muted">Klaim Retur ({{ $item->qty_retur }})</span>
+                                        <span class="text-emerald fw-bold">+ Rp {{ number_format($item->potongan_cn, 0, ',', '.') }}</span>
+                                    </div>
+                                @endif
+                                <div class="d-flex justify-content-between mt-2 pt-2" style="font-size: 0.85rem; border-top: 1px dashed #e2e8f0;">
+                                    <span class="text-slate-dark fw-bold">Pengeluaran Bersih</span>
+                                    <span class="fw-bold text-danger">
+                                        - Rp {{ number_format($item->pengeluaran_akhir, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white border-top-0 pb-3 pt-0">
+                                <button type="button" class="btn btn-sm btn-outline-info w-100 rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#detailPembelianModal{{ str_replace('-', '', $item->no_po) }}">
+                                    <i class="fas fa-search me-1"></i> Detail
+                                </button>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="text-center py-4 text-muted bg-white rounded shadow-sm border"><i class="fas fa-shopping-cart fa-2x mb-2 d-block opacity-25"></i>Belum ada pembelian pada rentang waktu ini.</div>
+                        @endforelse
+                    </div>
                 </div>
 
                 {{-- TAB 1: PER SALES --}}
-                <div class="tab-pane fade p-0" id="sales" role="tabpanel">
-                    <div class="table-responsive">
+                <div class="tab-pane fade show active p-0" id="sales" role="tabpanel">
+                      <div class="table-responsive d-none d-lg-block">
                         <table class="table table-laba w-100 mb-0">
                             <thead>
                                 <tr>
@@ -518,11 +686,57 @@
                             </tbody>
                         </table>
                     </div>
+                      
+                      {{-- MOBILE CARDS --}}
+                      <div class="d-lg-none p-2">
+                          @forelse($labaSales as $index => $item)
+                          <div class="card card-custom mb-3 border-0 shadow-sm">
+                              <div class="card-header-mobile">
+                                  <div>
+                                      <div class="fw-bold text-white" style="font-size:0.95rem;"><i class="fas fa-user-tie me-2"></i>{{ $item->nama }}</div>
+                                      <div class="text-white opacity-75" style="font-size:0.75rem;">Sales / Staff</div>
+                                  </div>
+                                  <div>
+                                      @if($index == 0) <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>#1</span>
+                                      @elseif($index == 1) <span class="badge bg-light text-secondary"><i class="fas fa-medal me-1"></i>#2</span>
+                                      @elseif($index == 2) <span class="badge bg-light text-dark"><i class="fas fa-award me-1"></i>#3</span>
+                                      @else <span class="badge bg-white bg-opacity-25 text-white">#{{ $index + 1 }}</span> @endif
+                                  </div>
+                              </div>
+                              <div class="card-body-mobile">
+                                  <div class="data-row">
+                                      <span class="data-label">Qty Bersih</span>
+                                      <span class="data-value">{{ $item->total_qty }} pcs</span>
+                                  </div>
+                                  <div class="data-row">
+                                      <span class="data-label">Omzet</span>
+                                      <span class="data-value">Rp {{ number_format($item->total_pendapatan, 0, ',', '.') }}</span>
+                                  </div>
+                                  <div class="data-row" style="border-top: 2px dashed #e2e8f0; margin-top:0.5rem; padding-top:0.5rem;">
+                                      <span class="data-label">Laba Bersih</span>
+                                      <span class="data-value {{ $item->total_laba >= 0 ? 'laba-positif' : 'laba-negatif' }}" style="font-size:1rem;">
+                                          {{ $item->total_laba >= 0 ? '+' : '' }} Rp {{ number_format($item->total_laba, 0, ',', '.') }}
+                                          @if($item->total_pendapatan > 0)
+                                              <span class="badge {{ $item->total_laba >= 0 ? 'bg-success' : 'bg-danger' }} bg-opacity-10 {{ $item->total_laba >= 0 ? 'text-success' : 'text-danger' }} border ms-1" style="font-size:0.65rem;">{{ number_format(($item->total_laba / $item->total_pendapatan) * 100, 1) }}%</span>
+                                          @endif
+                                      </span>
+                                  </div>
+                              </div>
+                              <div class="card-action-mobile">
+                                  <button type="button" class="btn btn-sm btn-outline-info rounded-pill py-1 px-4 fw-bold" style="font-size:0.75rem;" data-bs-toggle="modal" data-bs-target="#detailLabaSalesModal{{ $index }}">
+                                      <i class="fas fa-search me-1"></i> Lihat Detail
+                                  </button>
+                              </div>
+                          </div>
+                          @empty
+                          <div class="text-center py-5 text-muted"><i class="fas fa-chart-line fa-2x mb-2 d-block"></i>Belum ada data penjualan.</div>
+                          @endforelse
+                      </div>
                 </div>
 
                 {{-- TAB 2: PER PRODUK --}}
                 <div class="tab-pane fade p-0" id="produk" role="tabpanel">
-                    <div class="table-responsive">
+                      <div class="table-responsive d-none d-lg-block">
                         <table class="table table-laba w-100 mb-0">
                             <thead>
                                 <tr>
@@ -560,11 +774,53 @@
                             </tbody>
                         </table>
                     </div>
+                      
+                      {{-- MOBILE CARDS --}}
+                      <div class="d-lg-none p-2">
+                          @forelse($labaProduk as $index => $item)
+                          <div class="card card-custom mb-3 border-0 shadow-sm">
+                              <div class="card-header-mobile">
+                                  <div>
+                                      <div class="fw-bold text-white" style="font-size:0.95rem;"><span class="badge bg-white text-dark me-2 border">{{ $item->kode_barang }}</span>{{ $item->nama }}</div>
+                                  </div>
+                                  <div>
+                                      @if($index == 0) <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>#1</span>
+                                      @elseif($index == 1) <span class="badge bg-light text-secondary"><i class="fas fa-medal me-1"></i>#2</span>
+                                      @elseif($index == 2) <span class="badge bg-light text-dark"><i class="fas fa-award me-1"></i>#3</span>
+                                      @else <span class="badge bg-white bg-opacity-25 text-white">#{{ $index + 1 }}</span> @endif
+                                  </div>
+                              </div>
+                              <div class="card-body-mobile">
+                                  <div class="data-row">
+                                      <span class="data-label">Qty Bersih</span>
+                                      <span class="data-value">{{ $item->total_qty }} pcs</span>
+                                  </div>
+                                  <div class="data-row">
+                                      <span class="data-label">Total Omzet</span>
+                                      <span class="data-value">Rp {{ number_format($item->total_pendapatan, 0, ',', '.') }}</span>
+                                  </div>
+                                  <div class="data-row" style="border-top: 2px dashed #e2e8f0; margin-top:0.5rem; padding-top:0.5rem;">
+                                      <span class="data-label">Laba Bersih</span>
+                                      <span class="data-value {{ $item->total_laba >= 0 ? 'laba-positif' : 'laba-negatif' }}" style="font-size:1rem;">
+                                          {{ $item->total_laba >= 0 ? '+' : '' }} Rp {{ number_format($item->total_laba, 0, ',', '.') }}
+                                      </span>
+                                  </div>
+                              </div>
+                              <div class="card-action-mobile">
+                                  <button type="button" class="btn btn-sm btn-outline-info rounded-pill py-1 px-4 fw-bold" style="font-size:0.75rem;" data-bs-toggle="modal" data-bs-target="#detailLabaProdukModal{{ $index }}">
+                                      <i class="fas fa-search me-1"></i> Lihat Detail
+                                  </button>
+                              </div>
+                          </div>
+                          @empty
+                          <div class="text-center py-5 text-muted"><i class="fas fa-box-open fa-2x mb-2 d-block"></i>Belum ada data penjualan produk.</div>
+                          @endforelse
+                      </div>
                 </div>
 
                 {{-- TAB 3: PER MEREK --}}
                 <div class="tab-pane fade p-0" id="merek" role="tabpanel">
-                    <div class="table-responsive">
+                      <div class="table-responsive d-none d-lg-block">
                         <table class="table table-laba w-100 mb-0">
                             <thead>
                                 <tr>
@@ -600,11 +856,49 @@
                             </tbody>
                         </table>
                     </div>
+                      
+                      {{-- MOBILE CARDS --}}
+                      <div class="d-lg-none p-2">
+                          @forelse($labaMerek as $index => $item)
+                          <div class="card card-custom mb-3 border-0 shadow-sm">
+                              <div class="card-header-mobile">
+                                  <div>
+                                      <div class="fw-bold text-white" style="font-size:0.95rem;"><i class="fas fa-tag me-2"></i>{{ $item->nama ?: 'Tanpa Merek' }}</div>
+                                  </div>
+                                  <div>
+                                      @if($index == 0) <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>#1</span>
+                                      @elseif($index == 1) <span class="badge bg-light text-secondary"><i class="fas fa-medal me-1"></i>#2</span>
+                                      @elseif($index == 2) <span class="badge bg-light text-dark"><i class="fas fa-award me-1"></i>#3</span>
+                                      @else <span class="badge bg-white bg-opacity-25 text-white">#{{ $index + 1 }}</span> @endif
+                                  </div>
+                              </div>
+                              <div class="card-body-mobile">
+                                  <div class="data-row">
+                                      <span class="data-label">Qty Bersih</span>
+                                      <span class="data-value">{{ $item->total_qty }} pcs</span>
+                                  </div>
+                                  <div class="data-row" style="border-top: 2px dashed #e2e8f0; margin-top:0.5rem; padding-top:0.5rem;">
+                                      <span class="data-label">Laba Bersih</span>
+                                      <span class="data-value {{ $item->total_laba >= 0 ? 'laba-positif' : 'laba-negatif' }}" style="font-size:1rem;">
+                                          {{ $item->total_laba >= 0 ? '+' : '' }} Rp {{ number_format($item->total_laba, 0, ',', '.') }}
+                                      </span>
+                                  </div>
+                              </div>
+                              <div class="card-action-mobile">
+                                  <button type="button" class="btn btn-sm btn-outline-info rounded-pill py-1 px-4 fw-bold" style="font-size:0.75rem;" data-bs-toggle="modal" data-bs-target="#detailLabaMerekModal{{ $index }}">
+                                      <i class="fas fa-search me-1"></i> Lihat Detail
+                                  </button>
+                              </div>
+                          </div>
+                          @empty
+                          <div class="text-center py-5 text-muted"><i class="fas fa-tags fa-2x mb-2 d-block"></i>Belum ada data merek.</div>
+                          @endforelse
+                      </div>
                 </div>
 
                 {{-- TAB 4: PER CUSTOMER --}}
                 <div class="tab-pane fade p-0" id="customer" role="tabpanel">
-                    <div class="table-responsive">
+                      <div class="table-responsive d-none d-lg-block">
                         <table class="table table-laba w-100 mb-0">
                             <thead>
                                 <tr>
@@ -649,11 +943,54 @@
                             </tbody>
                         </table>
                     </div>
+                      
+                      {{-- MOBILE CARDS --}}
+                      <div class="d-lg-none p-2">
+                          @forelse($labaCustomer as $index => $item)
+                          <div class="card card-custom mb-3 border-0 shadow-sm">
+                              <div class="card-header-mobile">
+                                  <div>
+                                      <div class="fw-bold text-white" style="font-size:0.95rem;"><i class="fas fa-store me-2"></i>{{ $item->nama }}</div>
+                                      <div class="text-white opacity-75" style="font-size:0.75rem;">Customer</div>
+                                  </div>
+                                  <div>
+                                      @if($index == 0) <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>#1</span>
+                                      @elseif($index == 1) <span class="badge bg-light text-secondary"><i class="fas fa-medal me-1"></i>#2</span>
+                                      @elseif($index == 2) <span class="badge bg-light text-dark"><i class="fas fa-award me-1"></i>#3</span>
+                                      @else <span class="badge bg-white bg-opacity-25 text-white">#{{ $index + 1 }}</span> @endif
+                                  </div>
+                              </div>
+                              <div class="card-body-mobile">
+                                  <div class="data-row">
+                                      <span class="data-label">Total Item Kotor</span>
+                                      <span class="data-value">{{ $item->qty_awal }} item
+                                          @if($item->qty_retur > 0)
+                                              <div class="text-warning small" style="font-size: 0.65rem;"><i class="fas fa-undo me-1"></i>Retur: {{ $item->qty_retur }}</div>
+                                          @endif
+                                      </span>
+                                  </div>
+                                  <div class="data-row" style="border-top: 2px dashed #e2e8f0; margin-top:0.5rem; padding-top:0.5rem;">
+                                      <span class="data-label">Pemasukan Bersih</span>
+                                      <span class="data-value laba-positif" style="font-size:1rem;">
+                                          + Rp {{ number_format($item->total_laba, 0, ',', '.') }}
+                                      </span>
+                                  </div>
+                              </div>
+                              <div class="card-action-mobile">
+                                  <button type="button" class="btn btn-sm btn-outline-info rounded-pill py-1 px-4 fw-bold" style="font-size:0.75rem;" data-bs-toggle="modal" data-bs-target="#detailLabaCustomerModal{{ $index }}">
+                                      <i class="fas fa-search me-1"></i> Lihat Detail
+                                  </button>
+                              </div>
+                          </div>
+                          @empty
+                          <div class="text-center py-5 text-muted"><i class="fas fa-users fa-2x mb-2 d-block"></i>Belum ada data customer.</div>
+                          @endforelse
+                      </div>
                 </div>
 
                 {{-- TAB 5: PER SUPPLIER --}}
                 <div class="tab-pane fade p-0" id="supplier" role="tabpanel">
-                    <div class="table-responsive">
+                      <div class="table-responsive d-none d-lg-block">
                         <table class="table table-laba w-100 mb-0">
                             <thead>
                                 <tr>
@@ -698,6 +1035,49 @@
                             </tbody>
                         </table>
                     </div>
+                      
+                      {{-- MOBILE CARDS --}}
+                      <div class="d-lg-none p-2">
+                          @forelse($labaSupplier as $index => $item)
+                          <div class="card card-custom mb-3 border-0 shadow-sm">
+                              <div class="card-header-mobile supplier-header">
+                                  <div>
+                                      <div class="fw-bold text-white" style="font-size:0.95rem;"><i class="fas fa-truck me-2"></i>{{ $item->nama }}</div>
+                                      <div class="text-white opacity-75" style="font-size:0.75rem;">Supplier / Vendor</div>
+                                  </div>
+                                  <div>
+                                      @if($index == 0) <span class="badge bg-danger text-white"><i class="fas fa-exclamation-triangle me-1"></i>#1</span>
+                                      @elseif($index == 1) <span class="badge bg-warning text-dark"><i class="fas fa-exclamation me-1"></i>#2</span>
+                                      @elseif($index == 2) <span class="badge bg-secondary"><i class="fas fa-info me-1"></i>#3</span>
+                                      @else <span class="badge bg-white bg-opacity-25 text-white">#{{ $index + 1 }}</span> @endif
+                                  </div>
+                              </div>
+                              <div class="card-body-mobile">
+                                  <div class="data-row">
+                                      <span class="data-label">Total Item Kotor</span>
+                                      <span class="data-value">{{ $item->qty_awal }} item
+                                          @if($item->qty_retur > 0)
+                                              <div class="text-warning small" style="font-size: 0.65rem;"><i class="fas fa-undo me-1"></i>Retur: {{ $item->qty_retur }}</div>
+                                          @endif
+                                      </span>
+                                  </div>
+                                  <div class="data-row" style="border-top: 2px dashed #e2e8f0; margin-top:0.5rem; padding-top:0.5rem;">
+                                      <span class="data-label">Pengeluaran Bersih</span>
+                                      <span class="data-value laba-negatif" style="font-size:1rem;">
+                                          - Rp {{ number_format($item->pengeluaran_akhir, 0, ',', '.') }}
+                                      </span>
+                                  </div>
+                              </div>
+                              <div class="card-action-mobile">
+                                  <button type="button" class="btn btn-sm btn-outline-info rounded-pill py-1 px-4 fw-bold" style="font-size:0.75rem;" data-bs-toggle="modal" data-bs-target="#detailLabaSupplierModal{{ $index }}">
+                                      <i class="fas fa-search me-1"></i> Lihat Detail
+                                  </button>
+                              </div>
+                          </div>
+                          @empty
+                          <div class="text-center py-5 text-muted"><i class="fas fa-building fa-2x mb-2 d-block"></i>Belum ada data supplier.</div>
+                          @endforelse
+                      </div>
                 </div>
 
             </div>
@@ -785,7 +1165,7 @@
                         maintainAspectRatio: false,
                         cutout: '65%',
                         plugins: {
-                            legend: { position: 'right', labels: { boxWidth: 12, usePointStyle: true, padding: 15 } }
+                            legend: { position: window.innerWidth < 768 ? 'bottom' : 'right', labels: { boxWidth: 12, usePointStyle: true, padding: 15 } }
                         }
                     }
                 });
@@ -821,7 +1201,7 @@
                         maintainAspectRatio: false,
                         cutout: '65%',
                         plugins: {
-                            legend: { position: 'right', labels: { boxWidth: 12, usePointStyle: true, padding: 15 } }
+                            legend: { position: window.innerWidth < 768 ? 'bottom' : 'right', labels: { boxWidth: 12, usePointStyle: true, padding: 15 } }
                         }
                     }
                 });
@@ -866,3 +1246,14 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 @endsection
+
+
+
+
+
+
+
+
+
+
+

@@ -105,12 +105,12 @@
             <div class="stat-card stat-card-4 p-4">
                 <div class="d-flex justify-content-between align-items-center w-100">
                     <div>
-                        <p class="small text-uppercase fw-bold mb-1 letter-spacing-wide opacity-75">Total Omzet Bulan Ini</p>
-                        <h2 class="fw-bolder mb-0" style="font-size: 1.6rem;">Rp {{ number_format($omzetBulanIni, 0, ',', '.') }}</h2>
-                        <p class="small fw-bold mt-2 mb-0 opacity-75"><i class="fas fa-trophy me-1"></i> Penjualan Valid</p>
+                        <p class="small text-uppercase fw-bold mb-1 letter-spacing-wide opacity-75">Omzet Saya</p>
+                        <h2 class="fw-bolder mb-0" style="font-size: 1.4rem;">Rp {{ number_format($omzetBulanIni, 0, ',', '.') }}</h2>
+                        <p class="small fw-bold mt-2 mb-0 opacity-75"><i class="fas fa-calendar-check me-1"></i> Bulan Ini</p>
                     </div>
                     <div class="stat-icon-box">
-                        <i class="fas fa-hand-holding-usd"></i>
+                        <i class="fas fa-wallet"></i>
                     </div>
                 </div>
             </div>
@@ -151,7 +151,7 @@
                                 @endif
                             </div>
                             <div class="text-slate-muted small">{{ $so->customer ? $so->customer->nama_customer : '-' }}</div>
-                            <div class="text-emerald-custom fw-bold mt-1" style="font-size: 0.8rem;">Rp {{ number_format($so->total_semua, 0, ',', '.') }}</div>
+                            
                         </div>
                     </div>
                 @empty
@@ -170,7 +170,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         var salesOptions = {
             series: [
-                { name: 'Omzet Penjualan (Rp)', type: 'area', data: @json($omzetData) },
+                { name: 'Omzet', type: 'area', data: @json($omzetData) },
                 { name: 'Total Pesanan (SO)', type: 'line', data: @json($salesData) }
             ],
             chart: { height: 320, type: 'line', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false } },

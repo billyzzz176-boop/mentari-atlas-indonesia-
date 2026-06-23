@@ -131,7 +131,7 @@
                     </h6>
                 </div>
                 <div class="card-body p-0 bg-white flex-grow-1">
-                    <div class="table-wrapper-mentari">
+                    <div class="table-wrapper-mentari d-none d-lg-block">
                         <table class="table-mentari">
                             <thead>
                                 <tr>
@@ -165,6 +165,33 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    {{-- MOBILE CARDS --}}
+                    <div class="d-lg-none p-2 bg-light">
+                        @forelse($riwayat ?? [] as $trx)
+                        <div class="card card-custom mb-3 border-0 shadow-sm">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="fw-bold text-slate-dark">{{ $trx->no_invoice ?? ('#INV-'.$trx->id) }}</span>
+                                    <span class="badge rounded-pill fw-bold text-uppercase {{ strtolower($trx->status_bayar ?? '') == 'lunas' ? 'badge-success-soft' : 'badge-warning-soft' }}" style="font-size: 0.65rem;">
+                                        {{ $trx->status_bayar ?? 'BELUM BAYAR' }}
+                                    </span>
+                                </div>
+                                <div class="text-slate-muted small fw-medium mb-2"><i class="far fa-clock me-1"></i> {{ $trx->created_at->format('d/m/Y H:i') }}</div>
+                                <div class="mb-2">
+                                    <div class="fw-medium text-dark"><i class="fas fa-building me-1 opacity-50"></i> {{ $trx->penjualan?->customer?->nama_customer ?? 'Umum' }}</div>
+                                    <small class="text-muted"><i class="fas fa-user-tie me-1 opacity-50"></i> Sales: {{ $trx->penjualan?->user?->name ?? '-' }}</small>
+                                </div>
+                                <div class="pt-2 border-top">
+                                    <span class="text-muted small">Nilai Tagihan:</span>
+                                    <div class="fw-bold text-emerald-custom float-end">Rp {{ number_format($trx->total_tagihan ?? 0, 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="text-center py-4 text-slate-muted">Belum ada transaksi piutang/sales order yang tercatat.</div>
+                        @endforelse
                     </div>
                 </div>
             </div>

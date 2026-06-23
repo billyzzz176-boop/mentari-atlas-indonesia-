@@ -27,6 +27,16 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Rute Utilitas Migrasi (Publik untuk memudahkan sinkronisasi hosting)
+Route::get('/run-migration', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return "<h3>Artisan Migrate Output:</h3><pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre><br><a href='/'>Kembali ke Beranda</a>";
+    } catch (\Exception $e) {
+        return "<h3>Artisan Migrate Gagal:</h3><pre>" . $e->getMessage() . "</pre>";
+    }
+});
+
 // Rute yang WAJIB Login
 Route::middleware(['auth'])->group(function () {
 
@@ -36,6 +46,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Rute Bypass Symlink cPanel (403 Forbidden Fix)
+    Route::get('/berkas/{path}', function ($path) {
+        $file = storage_path('app/public/' . $path);
+        if (!file_exists($file)) abort(404);
+        return response()->file($file);
+    })->where('path', '.*')->name('berkas');
 
     // ===================================================
     // PUSAT LAPORAN KUSTOM (SMART REPORT BUILDER)
@@ -75,8 +92,11 @@ Route::middleware(['auth'])->group(function () {
     // FITUR RETUR BARANG
     Route::middleware(['role:direktur,return_barang'])->group(function () {
         Route::get('/warehouse/retur-penjualan', [ReturController::class, 'penjualanIndex'])->name('retur.penjualan.index');
+        Route::get('/warehouse/retur-penjualan/create', [ReturController::class, 'penjualanCreate'])->name('retur.penjualan.create');
         Route::post('/warehouse/retur-penjualan', [ReturController::class, 'penjualanStore'])->name('retur.penjualan.store');
+        
         Route::get('/warehouse/retur-pembelian', [ReturController::class, 'pembelianIndex'])->name('retur.pembelian.index');
+        Route::get('/warehouse/retur-pembelian/create', [ReturController::class, 'pembelianCreate'])->name('retur.pembelian.create');
         Route::post('/warehouse/retur-pembelian', [ReturController::class, 'pembelianStore'])->name('retur.pembelian.store');
         
         // EKSEKUSI RETURN PENDING (RMA)
@@ -115,7 +135,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
-    Route::middleware(['role:direktur'])->group(function () {
+    Route::middleware(['role:direktur,approval_so'])->group(function () {
         // Approval Direktur mutlak hanya untuk Direktur Utama
         Route::get('/penjualan/approval', [PenjualanController::class, 'approvalList'])->name('penjualan.approval');
         Route::post('/penjualan/approve/{id}', [PenjualanController::class, 'approve'])->name('penjualan.approve');
@@ -133,9 +153,26 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/penjualan/{id}', [PenjualanController::class, 'destroy'])->name('penjualan.destroy');
     });
     
-    Route::get('/penjualan/{id}/print-faktur', [PenjualanController::class, 'printFaktur'])->name('penjualan.printFaktur');
-    Route::get('/penjualan/{id}/surat-jalan', [PenjualanController::class, 'printSuratJalan'])->name('penjualan.printSuratJalan');
+    Route::get('/penjualan/{id}/cetak/faktur', [PenjualanController::class, 'printFaktur'])->name('penjualan.printFaktur');
+    Route::get('/penjualan/{id}/cetak/surat-jalan', [PenjualanController::class, 'printSuratJalan'])->name('penjualan.printSuratJalan');
+    Route::get('/pengiriman/{id}/cetak/faktur', [PenjualanController::class, 'printFakturPengiriman'])->name('penjualan.printFakturPengiriman');
+    Route::get('/pengiriman/{id}/cetak/surat-jalan', [PenjualanController::class, 'printSuratJalanPengiriman'])->name('penjualan.printSuratJalanPengiriman');
     Route::get('/penjualan/{id}', [PenjualanController::class, 'show'])->name('penjualan.show');
+
+    // Temporary route to fix stuck SO
+    Route::get('/fix-so', function() {
+        // Fix SO yang tertahan di draft padahal sudah disetujui
+        \App\Models\Penjualan::where('status_approval', 'disetujui')->where('status', 'draft')->update(['status' => 'diproses']);
+        
+        // Fix SO yang tertahan di menunggu_restock padahal sudah memiliki pengiriman
+        $stuckBOs = \App\Models\Penjualan::where('status', 'menunggu_restock')->has('pengirimans')->get();
+        foreach($stuckBOs as $so) {
+            $so->status = 'ready_to_invoice';
+            $so->save();
+        }
+        
+        return 'Data SO yang tersangkut berhasil diperbaiki. Silakan kembali ke halaman aplikasi.';
+    });
 
     // ANTRIAN BACK ORDER
     Route::middleware(['role:direktur,backorder'])->group(function () {
@@ -169,4 +206,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/keuangan/utang/{id}', [KeuanganController::class, 'utangShow'])->name('keuangan.utang.show');
         Route::post('/keuangan/utang/bayar/{id}', [KeuanganController::class, 'utangBayar'])->name('keuangan.utang.bayar');
     });
+});
+
+// TEMPORARY ROUTE TO RUN DB MIGRATIONS FOR INDEXING
+Route::get('/run-migration-indexes', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return '<h1>Migrasi Sukses!</h1><p>Database indexing telah berhasil ditambahkan. Silakan kembali ke <a href="/">Dashboard</a>.</p>';
+    } catch (\Exception $e) {
+        return '<h1>Gagal!</h1><p>' . $e->getMessage() . '</p>';
+    }
 });

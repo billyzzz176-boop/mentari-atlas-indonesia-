@@ -75,7 +75,7 @@
 
     <div class="row">
         {{-- PANEL IMPORT CSV --}}
-        <div class="col-md-12 mb-4">
+        <div class="col-md-12 mb-4 d-none d-lg-block">
             <div class="card card-custom border-left-emerald bg-white py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -107,7 +107,7 @@
         {{-- TABEL INVENTARIS BARANG --}}
         <div class="col-md-12">
             <div class="table-wrapper-mentari">
-                <div class="table-responsive">
+                <div class="table-responsive d-none d-lg-block">
                     <table class="table table-mentari table-mentari-compact align-middle mb-0" style="width: 100%;">
                         <thead>
                             <tr>
@@ -178,6 +178,49 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+                
+                {{-- PAGINATION DESKTOP --}}
+                <div class="d-none d-lg-block mt-3 px-3">
+                    {{ $barangs->links('pagination::bootstrap-5') }}
+                </div>
+            
+                {{-- MOBILE CARDS --}}
+                <div class="d-lg-none p-3" style="background-color: var(--bg-page);">
+                    @forelse($barangs as $b)
+                    <div class="card card-custom mb-3" style="border-radius: 16px;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-emerald-custom fw-bold px-2 py-1" style="border-radius: 8px;">{{ $b->kode_barang }}</span>
+                                <div class="text-end">
+                                    <span class="fw-bold fs-6 {{ $b->stok_akhir <= 15 ? 'text-danger' : 'text-emerald-custom' }}">Stok: {{ $b->stok_akhir }}</span>
+                                    @if($b->stok_akhir <= 15) <span class="d-block text-danger" style="font-size: 0.6rem;">Kritis</span> @endif
+                                </div>
+                            </div>
+                            <h6 class="fw-bold text-slate-dark mb-1" style="font-size: 1.05rem;">{{ $b->nama_barang }}</h6>
+                            <div class="text-muted mb-3" style="font-size: 0.8rem;">
+                                @if($b->merek)<span class="me-2"><i class="fas fa-tag text-emerald-custom me-1"></i>{{ $b->merek }}</span>@endif
+                                @if($b->spesifikasi)<span><i class="fas fa-info-circle text-emerald-custom me-1"></i>{{ $b->spesifikasi }}</span>@endif
+                            </div>
+                            <div class="d-flex justify-content-between mb-3 bg-light p-2" style="border-radius: 12px; border: 1px solid var(--border-panel);">
+                                <div><small class="text-muted d-block" style="font-size:0.65rem;">HPP</small><span class="fw-bold text-slate-dark" style="font-size:0.85rem;">Rp {{ number_format($b->harga_beli, 0, ',', '.') }}</span></div>
+                                <div class="text-end"><small class="text-muted d-block" style="font-size:0.65rem;">Harga Jual</small><span class="fw-bold text-emerald-custom" style="font-size:0.9rem;">Rp {{ number_format($b->harga_jual, 0, ',', '.') }}</span></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-primary-soft flex-fill fw-bold" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalDetailBarang{{ $b->id }}"><i class="fas fa-eye"></i></button>
+                                <a href="{{ route('barang.history', $b->id) }}" class="btn btn-sm btn-info-soft flex-fill fw-bold" style="border-radius: 10px;"><i class="fas fa-history"></i></a>
+                                <button type="button" class="btn btn-sm btn-warning-soft flex-fill fw-bold" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#modalEditBarang{{ $b->id }}"><i class="fas fa-pen"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-5 text-muted bg-white shadow-sm" style="border-radius: 16px;">Belum ada data barang.</div>
+                    @endforelse
+
+                    {{-- PAGINATION MOBILE --}}
+                    <div class="mt-3">
+                        {{ $barangs->links('pagination::bootstrap-5') }}
+                    </div>
                 </div>
             </div>
         </div>

@@ -127,7 +127,7 @@
                     <a href="{{ route('penjualan.index') }}" class="btn btn-sm btn-light text-slate-muted border rounded-pill px-3 py-1" style="font-size: 0.75rem;">Lihat Semua</a>
                 </div>
                 <div class="card-body p-0 bg-white flex-grow-1">
-                    <div class="table-wrapper-mentari">
+                    <div class="table-wrapper-mentari d-none d-lg-block">
                         <table class="table-mentari">
                             <thead>
                                 <tr>
@@ -160,6 +160,28 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    {{-- MOBILE CARDS --}}
+                    <div class="d-lg-none p-2 bg-light">
+                        @forelse($tabelPacking as $tp)
+                        <div class="card card-custom mb-3 border-0 shadow-sm">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="fw-bold text-slate-dark">{{ $tp->no_so }}</span>
+                                    <span class="badge rounded-pill fw-bold text-uppercase" style="font-size: 0.65rem; background-color: #fef3c7; color: #92400e;">
+                                        MENUNGGU
+                                    </span>
+                                </div>
+                                <div class="text-slate-muted small fw-medium mb-2"><i class="far fa-clock me-1"></i> {{ $tp->updated_at->diffForHumans() }}</div>
+                                <div class="mb-2">
+                                    <div class="fw-medium text-dark"><i class="fas fa-user-tie me-1 opacity-50"></i> {{ $tp->customer ? $tp->customer->nama_customer : '-' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="text-center py-4 text-slate-muted">Belum ada antrean packing untuk hari ini.</div>
+                        @endforelse
                     </div>
                 </div>
             </div>

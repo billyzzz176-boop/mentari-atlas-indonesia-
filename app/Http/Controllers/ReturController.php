@@ -26,7 +26,7 @@ class ReturController extends Controller
     
     public function penjualanIndex()
     {
-        $penjualans = Penjualan::with('customer')->orderBy('id', 'desc')->get();
+        $penjualans = Penjualan::with('customer')->orderBy('id', 'asc')->get();
         $barangs = Barang::all();
         
         $returs = DB::table('returs')
@@ -49,7 +49,8 @@ class ReturController extends Controller
                 $item->barang = (object) ['nama_barang' => $item->nama_barang ?? 'N/A'];
                 $item->created_at = Carbon::parse($item->created_at);
                 return $item;
-            });
+            })
+            ->groupBy('no_retur_jual');
 
         return view('warehouse.retur_penjualan', compact('penjualans', 'barangs', 'returs'));
     }
@@ -65,6 +66,7 @@ class ReturController extends Controller
                 return [
                     'barang_id' => $item->barang_id,
                     'jumlah_diajukan' => $item->jumlah,
+                    'harga_satuan' => $item->harga_satuan,
                     'barang' => [
                         'nama_barang' => $item->nama_barang
                     ]
@@ -74,18 +76,47 @@ class ReturController extends Controller
         return response()->json($items);
     }
 
+    public function penjualanCreate()
+    {
+        $penjualans = Penjualan::with('customer')
+            ->whereIn('status', ['ready_to_invoice', 'selesai'])
+            ->orderBy('id', 'asc')
+            ->get();
+        return view('warehouse.retur_penjualan_create', compact('penjualans'));
+    }
+
     public function penjualanStore(Request $request)
     {
+        // Mendukung format single-item lama untuk kompatibilitas ke belakang (misal: Unit Test)
+        if ($request->has('barang_id') && !$request->has('items')) {
+            $items = [
+                0 => [
+                    'selected' => '1',
+                    'barang_id' => $request->barang_id,
+                    'qty_retur' => $request->qty_retur,
+                    'jenis_retur' => $request->jenis_retur,
+                    'status_kondisi' => $request->status_kondisi,
+                    'aging_retur' => $request->aging_retur,
+                    'nominal_potongan' => $request->nominal_potongan,
+                    'alasan' => $request->alasan,
+                ]
+            ];
+            $request->merge(['items' => $items]);
+        }
+
         $request->validate([
             'penjualan_id' => 'required',
-            'barang_id' => 'required',
-            'jenis_retur' => 'required|in:fisik,harga_credit_note', 
-            'qty_retur' => 'required|integer|min:1',
-            'status_kondisi' => 'required_if:jenis_retur,fisik|nullable|in:bagus,rusak',
-            'aging_retur' => 'nullable|string', 
-            'nominal_potongan' => 'nullable|numeric|min:0', 
-            'alasan' => 'required|string'
+            'items' => 'required|array|min:1',
         ]);
+
+        // Filter item yang dicentang
+        $selectedItems = array_filter($request->items, function($item) {
+            return isset($item['selected']) && $item['selected'] == '1';
+        });
+
+        if (empty($selectedItems)) {
+            return redirect()->back()->withErrors(['error' => 'Pilih setidaknya satu barang untuk diretur!']);
+        }
 
         DB::beginTransaction();
         try {
@@ -95,115 +126,141 @@ class ReturController extends Controller
             }
             $noSO = $penjualan->no_so;
 
-            $detail = DB::table('penjualan_details')
-                ->where('penjualan_id', $request->penjualan_id)
-                ->where('barang_id', $request->barang_id)
-                ->first();
-
-            if (!$detail) {
-                return redirect()->back()->withErrors(['error' => 'Barang tidak ditemukan dalam nota penjualan ini.']);
-            }
-
-            $totalReturSebelumnya = DB::table('returs')
-                ->where('tipe', 'penjualan')
-                ->where('referensi_id', $request->penjualan_id)
-                ->where('barang_id', $request->barang_id)
-                ->sum('qty');
-
-            $sisaKapasitasRetur = $detail->jumlah - $totalReturSebelumnya;
-
-            if ($request->qty_retur > $sisaKapasitasRetur) {
-                return redirect()->back()->withErrors(['error' => "Batas retur terlampaui! Maksimal kuantitas yang masih bisa diretur untuk item ini adalah {$sisaKapasitasRetur} Pcs."]);
-            }
-
+            // Satu nomor retur untuk satu batch transaksi retur ini
             $noReturAuto = 'RE-JUAL-' . date('Ymd') . rand(100, 999);
             
-            // -------------------------------------------------------------
-            // LOGIKA HITUNG CREDIT NOTE & DENDA AGING
-            // -------------------------------------------------------------
-            $nominalPotonganAwal = $request->jenis_retur === 'harga_credit_note' 
-                ? (float) $request->nominal_potongan 
-                : ((float) $request->qty_retur * (float) $detail->harga_satuan);
+            $totalPotonganBatch = 0;
+            $alasanCombined = [];
 
-            $nominalTerpakaiReturs = $nominalPotonganAwal;
-            $teksAlasan = $request->alasan;
+            foreach ($selectedItems as $index => $itemData) {
+                $barangId = $itemData['barang_id'] ?? null;
+                $qtyRetur = (int) ($itemData['qty_retur'] ?? 0);
+                $jenisRetur = $itemData['jenis_retur'] ?? 'fisik';
+                $statusKondisi = $itemData['status_kondisi'] ?? 'bagus';
+                $agingRetur = $itemData['aging_retur'] ?? '0_45';
+                $nominalPotonganCustom = (float) ($itemData['nominal_potongan'] ?? 0);
+                $alasanItem = $itemData['alasan'] ?? 'Klaim return';
 
-            if ($request->jenis_retur === 'fisik' && strtolower($request->status_kondisi) === 'rusak') {
-                if ($request->aging_retur === '46_90') {
-                    $denda = $nominalPotonganAwal * 0.10;
-                    $nominalTerpakaiReturs = $nominalPotonganAwal - $denda;
-                    $teksAlasan = $request->alasan . ' [Retur 46-90 Hari: Kena charge denda 10%]';
-                } elseif ($request->aging_retur === '91_135') {
-                    $denda = $nominalPotonganAwal * 0.30;
-                    $nominalTerpakaiReturs = $nominalPotonganAwal - $denda;
-                    $teksAlasan = $request->alasan . ' [Retur >90 Hari: Kena charge denda 30%]';
+                if (!$barangId || $qtyRetur <= 0) {
+                    throw new \Exception("Data barang atau kuantitas retur tidak valid.");
                 }
-            }
 
-            DB::table('returs')->insert([
-                'tipe' => 'penjualan',
-                'referensi_id' => $request->penjualan_id,
-                'barang_id' => $request->barang_id,
-                'qty' => $request->qty_retur,
-                'nominal_potongan' => $nominalTerpakaiReturs,
-                'jenis_retur' => $request->jenis_retur,
-                'kondisi' => $request->jenis_retur === 'fisik' ? $request->status_kondisi : 'tidak_mempengaruhi',
-                'alasan' => $teksAlasan,
-                'no_retur' => $noReturAuto,
-                'status_retur' => 'completed', // Retur Jual selalu langsung selesai
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                $detail = DB::table('penjualan_details')
+                    ->where('penjualan_id', $request->penjualan_id)
+                    ->where('barang_id', $barangId)
+                    ->first();
 
-            $nomorCN = 'CN-JUAL-' . date('Ymd') . rand(100, 999);
-            CreditNote::create([
-                'nomor_cn' => $nomorCN,
-                'tipe' => 'penjualan',
-                'referensi_id' => $request->penjualan_id,
-                'nominal' => $nominalTerpakaiReturs,
-                'keterangan' => 'Credit Note terbit dari klaim (' . $request->jenis_retur . '): ' . $teksAlasan,
-            ]);
+                if (!$detail) {
+                    throw new \Exception("Barang dengan ID {$barangId} tidak ditemukan dalam nota penjualan SO {$noSO}.");
+                }
 
-            if ($request->jenis_retur === 'fisik') {
-                $barang = Barang::find($request->barang_id);
-                if ($barang) {
-                    if (strtolower($request->status_kondisi) === 'bagus') {
-                        $stokSebelumnya = $barang->stok_akhir;
-                        $barang->update([
-                            'stok_akhir' => $barang->stok_akhir + $request->qty_retur,
-                            'barang_masuk' => $barang->barang_masuk + $request->qty_retur
-                        ]);
+                $totalReturSebelumnya = DB::table('returs')
+                    ->where('tipe', 'penjualan')
+                    ->where('referensi_id', $request->penjualan_id)
+                    ->where('barang_id', $barangId)
+                    ->sum('qty');
 
-                        StockHistory::record(
-                            $barang,
-                            $request->qty_retur, 
-                            'return_customer',
-                            $noReturAuto . ' / ' . $noSO, 
-                            'Retur fisik customer (BAGUS). Stok ditarik kembali ke sistem gudang utama. [CN: ' . $nomorCN . ']',
-                            $stokSebelumnya
-                        );
-                    } else {
-                        $stokRusakSebelumnya = $barang->stok_rusak ?? 0;
-                        $barang->update([
-                            'stok_rusak' => $stokRusakSebelumnya + $request->qty_retur
-                        ]);
+                $sisaKapasitasRetur = $detail->jumlah - $totalReturSebelumnya;
 
-                        StockHistory::record(
-                            $barang,
-                            $request->qty_retur, 
-                            'return_customer',
-                            $noReturAuto . ' / ' . $noSO, 
-                            'Retur fisik customer (RUSAK). Barang otomatis dialokasikan ke Stok Rusak. [CN: ' . $nomorCN . ']',
-                            $stokRusakSebelumnya
-                        );
+                if ($qtyRetur > $sisaKapasitasRetur) {
+                    $barangObj = Barang::find($barangId);
+                    $namaBarang = $barangObj ? $barangObj->nama_barang : "ID {$barangId}";
+                    throw new \Exception("Batas retur terlampaui untuk item '{$namaBarang}'! Maksimal kuantitas yang masih bisa diretur adalah {$sisaKapasitasRetur} Pcs.");
+                }
+
+                // -------------------------------------------------------------
+                // LOGIKA HITUNG CREDIT NOTE & DENDA AGING
+                // -------------------------------------------------------------
+                $nominalPotonganAwal = $jenisRetur === 'harga_credit_note' 
+                    ? $nominalPotonganCustom 
+                    : ((float) $qtyRetur * (float) $detail->harga_satuan);
+
+                $nominalTerpakaiReturs = $nominalPotonganAwal;
+                $teksAlasan = $alasanItem;
+
+                if ($jenisRetur === 'fisik') {
+                    if ($agingRetur === '46_90') {
+                        $denda = $nominalPotonganAwal * 0.10;
+                        $nominalTerpakaiReturs = $nominalPotonganAwal - $denda;
+                        $teksAlasan = $alasanItem . ' [Retur 46-90 Hari: Kena charge denda 10%]';
+                    } elseif ($agingRetur === '91_135') {
+                        $denda = $nominalPotonganAwal * 0.30;
+                        $nominalTerpakaiReturs = $nominalPotonganAwal - $denda;
+                        $teksAlasan = $alasanItem . ' [Retur >90 Hari: Kena charge denda 30%]';
                     }
                 }
+
+                // Catat ke tabel `returs`
+                DB::table('returs')->insert([
+                    'tipe' => 'penjualan',
+                    'referensi_id' => $request->penjualan_id,
+                    'barang_id' => $barangId,
+                    'qty' => $qtyRetur,
+                    'nominal_potongan' => $nominalTerpakaiReturs,
+                    'jenis_retur' => $jenisRetur,
+                    'kondisi' => $jenisRetur === 'fisik' ? $statusKondisi : 'tidak_mempengaruhi',
+                    'alasan' => $teksAlasan,
+                    'no_retur' => $noReturAuto,
+                    'status_retur' => 'completed',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Terbit Credit Note per item
+                $nomorCN = 'CN-JUAL-' . date('Ymd') . rand(100, 999);
+                CreditNote::create([
+                    'nomor_cn' => $nomorCN,
+                    'tipe' => 'penjualan',
+                    'referensi_id' => $request->penjualan_id,
+                    'nominal' => $nominalTerpakaiReturs,
+                    'keterangan' => 'Credit Note terbit dari klaim (' . $jenisRetur . '): ' . $teksAlasan,
+                ]);
+
+                // Update fisik gudang
+                if ($jenisRetur === 'fisik') {
+                    $barang = Barang::lockForUpdate()->find($barangId);
+                    if ($barang) {
+                        if (strtolower($statusKondisi) === 'bagus') {
+                            $stokSebelumnya = $barang->stok_akhir;
+                            $barang->update([
+                                'stok_akhir' => $barang->stok_akhir + $qtyRetur,
+                                'barang_masuk' => $barang->barang_masuk + $qtyRetur
+                            ]);
+
+                            StockHistory::record(
+                                $barang,
+                                $qtyRetur, 
+                                'return_customer',
+                                $noReturAuto . ' / ' . $noSO, 
+                                'Retur fisik customer (BAGUS). Stok ditarik kembali ke sistem gudang utama. [CN: ' . $nomorCN . ']',
+                                $stokSebelumnya
+                            );
+                        } else {
+                            $stokRusakSebelumnya = $barang->stok_rusak ?? 0;
+                            $barang->update([
+                                'stok_rusak' => $stokRusakSebelumnya + $qtyRetur
+                            ]);
+
+                            StockHistory::record(
+                                $barang,
+                                $qtyRetur, 
+                                'return_customer',
+                                $noReturAuto . ' / ' . $noSO, 
+                                'Retur fisik customer (RUSAK). Barang otomatis dialokasikan ke Stok Rusak. [CN: ' . $nomorCN . ']',
+                                $stokRusakSebelumnya
+                            );
+                        }
+                    }
+                }
+
+                $totalPotonganBatch += $nominalTerpakaiReturs;
+                $alasanCombined[] = $teksAlasan;
             }
 
+            // Update Piutang secara akumulatif
             $piutang = Piutang::where('penjualan_id', $request->penjualan_id)->first();
-            if ($piutang) {
-                $nominalTerpakaiPiutang = $nominalTerpakaiReturs;
-                $piutang->total_tagihan = max(0, (float) $piutang->total_tagihan - $nominalTerpakaiPiutang);
+            if ($piutang && $totalPotonganBatch > 0) {
+                $piutang->total_tagihan = max(0, (float) $piutang->total_tagihan - $totalPotonganBatch);
                 $sisa = (float) $piutang->total_tagihan - (float) $piutang->total_dibayar;
 
                 if ($sisa <= 0) {
@@ -217,13 +274,14 @@ class ReturController extends Controller
 
                 $piutang->save();
 
+                // Catat pembayaran piutang dengan total akumulasi
                 PembayaranPiutang::create([
                     'piutang_id' => $piutang->id,
-                    'jumlah_bayar' => (float) $nominalTerpakaiPiutang,
+                    'jumlah_bayar' => $totalPotonganBatch,
                     'tanggal_bayar' => Carbon::now(),
                     'metode_pembayaran' => 'Retur Customer / Credit Note',
                     'diterima_oleh' => Auth::id(),
-                    'keterangan' => 'Retur otomatis mengurangi tagihan [' . $noReturAuto . ']: ' . $teksAlasan,
+                    'keterangan' => 'Retur massal otomatis mengurangi tagihan [' . $noReturAuto . ']: ' . implode('; ', array_unique($alasanCombined)),
                     'bukti_bayar' => null,
                 ]);
             }
@@ -231,12 +289,12 @@ class ReturController extends Controller
             ActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'RETUR PENJUALAN',
-                'description' => Auth::user()->name . ' memproses klaim retur penjualan (Credit Note): ' . $noReturAuto,
+                'description' => Auth::user()->name . ' memproses klaim retur penjualan massal (Credit Note): ' . $noReturAuto,
                 'ip_address' => request()->ip(),
             ]);
 
             DB::commit();
-            return redirect()->back()->with('success', 'Klaim Retur Penjualan & Credit Note berhasil diproses.');
+            return redirect()->route('retur.penjualan.index')->with('success', 'Klaim Retur Penjualan & Credit Note berhasil diproses.');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -250,7 +308,7 @@ class ReturController extends Controller
     
     public function pembelianIndex()
     {
-        $pembelians = Pembelian::orderBy('id', 'desc')->get();
+        $pembelians = Pembelian::orderBy('id', 'asc')->get();
         $barangs = Barang::all();
         
         $returs = DB::table('returs')
@@ -273,22 +331,41 @@ class ReturController extends Controller
                 $item->barang = (object) ['nama_barang' => $item->nama_barang ?? 'N/A'];
                 $item->created_at = Carbon::parse($item->created_at);
                 return $item;
-            });
+            })
+            ->groupBy('no_retur_beli');
 
         return view('warehouse.retur_pembelian', compact('pembelians', 'barangs', 'returs'));
     }
 
+    public function pembelianCreate()
+    {
+        $pembelians = Pembelian::select('no_pembelian', 'nama_supplier')
+            ->distinct()
+            ->orderBy('no_pembelian', 'desc')
+            ->get();
+        return view('warehouse.retur_pembelian_create', compact('pembelians'));
+    }
+
     public function getItemsPO($id)
     {
+        if (is_numeric($id)) {
+            $p = Pembelian::find($id);
+            $noPO = $p ? $p->no_pembelian : $id;
+        } else {
+            $noPO = $id;
+        }
+
         $items = DB::table('pembelians')
             ->join('barangs', 'pembelians.barang_id', '=', 'barangs.id')
-            ->where('pembelians.id', $id)
+            ->where('pembelians.no_pembelian', $noPO)
             ->select('pembelians.*', 'barangs.nama_barang')
             ->get()
             ->map(function($item) {
                 return [
+                    'id' => $item->id,
                     'barang_id' => $item->barang_id,
                     'jumlah_diajukan' => $item->jumlah_beli,
+                    'harga_beli' => $item->harga_beli_hpp ?? 0,
                     'barang' => [
                         'nama_barang' => $item->nama_barang
                     ]
@@ -300,100 +377,164 @@ class ReturController extends Controller
 
     public function pembelianStore(Request $request)
     {
+        // Mendukung format single-item lama untuk kompatibilitas ke belakang (misal: Unit Test)
+        if ($request->has('barang_id') && !$request->has('items')) {
+            $items = [
+                0 => [
+                    'selected' => '1',
+                    'barang_id' => $request->barang_id,
+                    'qty_retur' => $request->qty_retur,
+                    'jenis_retur' => $request->jenis_retur,
+                    'status_kondisi' => $request->status_kondisi,
+                    'nominal_potongan' => $request->nominal_potongan,
+                    'alasan' => $request->alasan,
+                ]
+            ];
+            $request->merge(['items' => $items]);
+        }
+
         $request->validate([
             'pembelian_id' => 'required',
-            'barang_id' => 'required',
-            'jenis_retur' => 'required|in:fisik,harga_debit_note', 
-            'qty_retur' => 'required|integer|min:1',
-            'status_kondisi' => 'required_if:jenis_retur,fisik|nullable|in:bagus,rusak', 
-            'nominal_potongan' => 'nullable|numeric|min:0', 
-            'alasan' => 'required|string'
+            'items' => 'required|array|min:1',
         ]);
 
-        $barang = Barang::findOrFail($request->barang_id);
+        // Filter item yang dicentang
+        $selectedItems = array_filter($request->items, function($item) {
+            return isset($item['selected']) && $item['selected'] == '1';
+        });
 
-        // LOGIKA PENGECEKAN STOK (Bagus vs Rusak) SEBELUM DIRETUR KE SUPPLIER
-        if ($request->jenis_retur === 'fisik') {
-            $stokTersedia = ($request->status_kondisi === 'rusak') ? ($barang->stok_rusak ?? 0) : ($barang->stok_akhir ?? 0);
-            
-            if ($stokTersedia < $request->qty_retur) {
-                return redirect()->back()->withErrors([
-                    'error' => "Gagal Retur Fisik! Sisa stok ".ucfirst($request->status_kondisi)." '{$barang->nama_barang}' di gudang hanya ({$stokTersedia} pcs), tidak cukup untuk diretur."
-                ]);
-            }
+        if (empty($selectedItems)) {
+            return redirect()->back()->withErrors(['error' => 'Pilih setidaknya satu barang untuk diretur!']);
         }
 
         DB::beginTransaction();
         try {
-            $pembelian = Pembelian::find($request->pembelian_id);
+            $pembelianVal = $request->pembelian_id;
+            $pembelian = Pembelian::where('no_pembelian', $pembelianVal)->first() 
+                ?? Pembelian::find($pembelianVal);
 
             if (!$pembelian) {
-                return redirect()->back()->withErrors(['error' => 'Pembelian tidak ditemukan.']);
+                return redirect()->back()->withErrors(['error' => 'Data Pembelian tidak ditemukan.']);
             }
             $noPO = $pembelian->no_pembelian;
 
-            // Karena input Retur Manual, langsung eksekusi sebagai "Completed"
+            // Satu nomor retur untuk satu batch transaksi retur ini
             $noReturAuto = 'RE-BELI-' . date('Ymd') . rand(100, 999);
-            
-            $nominalPotongan = ($request->jenis_retur === 'harga_debit_note' && !is_null($request->nominal_potongan))
-                ? (float) $request->nominal_potongan 
-                : ((float) $request->qty_retur * (float) $pembelian->harga_beli_hpp);
+            $totalPotonganBatch = 0;
+            $alasanCombined = [];
 
-            DB::table('returs')->insert([
-                'no_retur' => $noReturAuto,
-                'tipe' => 'pembelian',
-                'jenis_retur' => $request->jenis_retur,
-                'referensi_id' => $request->pembelian_id,
-                'barang_id' => $request->barang_id,
-                'qty' => $request->qty_retur,
-                'kondisi' => $request->jenis_retur === 'fisik' ? $request->status_kondisi : 'tidak_mempengaruhi',
-                'nominal_potongan' => $nominalPotongan,
-                'status_retur' => 'completed', // Retur Manual langsung selesai
-                'alasan' => $request->alasan,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            foreach ($selectedItems as $index => $itemData) {
+                $barangId = $itemData['barang_id'] ?? null;
+                $qtyRetur = (int) ($itemData['qty_retur'] ?? 0);
+                $jenisRetur = $itemData['jenis_retur'] ?? 'fisik';
+                $statusKondisi = $itemData['status_kondisi'] ?? 'bagus';
+                $nominalPotonganCustom = (float) ($itemData['nominal_potongan'] ?? 0);
+                $alasanItem = $itemData['alasan'] ?? 'Klaim return';
 
+                if (!$barangId || $qtyRetur <= 0) {
+                    throw new \Exception("Data barang atau kuantitas retur tidak valid.");
+                }
+
+                $barang = Barang::lockForUpdate()->find($barangId);
+                if (!$barang) {
+                    throw new \Exception("Barang dengan ID {$barangId} tidak ditemukan.");
+                }
+
+                // Ambil record pembelian spesifik untuk barang ini dalam PO tersebut
+                $detail = Pembelian::where('no_pembelian', $noPO)
+                    ->where('barang_id', $barangId)
+                    ->first();
+
+                if (!$detail) {
+                    throw new \Exception("Barang '{$barang->nama_barang}' tidak ditemukan dalam nota pembelian PO {$noPO}.");
+                }
+
+                // Cek stok gudang jika retur fisik
+                if ($jenisRetur === 'fisik') {
+                    $stokTersedia = ($statusKondisi === 'rusak') ? ($barang->stok_rusak ?? 0) : ($barang->stok_akhir ?? 0);
+                    if ($stokTersedia < $qtyRetur) {
+                        throw new \Exception("Gagal Retur Fisik untuk '{$barang->nama_barang}'! Sisa stok ".ucfirst($statusKondisi)." di gudang hanya ({$stokTersedia} pcs), tidak cukup untuk diretur.");
+                    }
+                }
+
+                // Kalkulasi nominal potongan
+                $nominalPotongan = ($jenisRetur === 'harga_debit_note' && $nominalPotonganCustom > 0)
+                    ? $nominalPotonganCustom 
+                    : ((float) $qtyRetur * (float) $detail->harga_beli_hpp);
+
+                // Masukkan ke tabel returs
+                DB::table('returs')->insert([
+                    'no_retur' => $noReturAuto,
+                    'tipe' => 'pembelian',
+                    'jenis_retur' => $jenisRetur,
+                    'referensi_id' => $detail->id, // hubungkan ke record detail pembelian spesifik
+                    'barang_id' => $barangId,
+                    'qty' => $qtyRetur,
+                    'kondisi' => $jenisRetur === 'fisik' ? $statusKondisi : 'tidak_mempengaruhi',
+                    'nominal_potongan' => $nominalPotongan,
+                    'status_retur' => 'completed',
+                    'alasan' => $alasanItem,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Update fisik gudang
+                if ($jenisRetur === 'fisik') {
+                    if ($statusKondisi === 'rusak') {
+                        $stokRusakSebelumnya = $barang->stok_rusak ?? 0;
+                        $barang->update(['stok_rusak' => $stokRusakSebelumnya - $qtyRetur]);
+                        
+                        StockHistory::record(
+                            $barang, -$qtyRetur, 'return_supplier', $noReturAuto . ' / ' . $noPO, 
+                            'Retur fisik BARANG RUSAK ke supplier. [DN per item]', $stokRusakSebelumnya
+                        );
+                    } else {
+                        $stokSebelumnya = $barang->stok_akhir;
+                        $barang->update([
+                            'stok_akhir' => $barang->stok_akhir - $qtyRetur,
+                            'barang_keluar' => $barang->barang_keluar + $qtyRetur,
+                        ]);
+                        
+                        StockHistory::record(
+                            $barang, -$qtyRetur, 'return_supplier', $noReturAuto . ' / ' . $noPO, 
+                            'Retur fisik BARANG BAGUS ke supplier. [DN per item]', $stokSebelumnya
+                        );
+                    }
+                }
+
+                $totalPotonganBatch += $nominalPotongan;
+                $alasanCombined[] = $alasanItem;
+            }
+
+            // Terbit Credit Note (Debit Note) secara akumulatif untuk batch ini
             $nomorDN = 'DN-BELI-' . date('Ymd') . rand(100, 999);
-            CreditNote::create([
-                'nomor_cn' => $nomorDN, 
-                'tipe' => 'pembelian',
-                'referensi_id' => $request->pembelian_id,
-                'nominal' => $nominalPotongan,
-                'keterangan' => 'Debit Note terbit akibat klaim retur pembelian ke supplier: ' . $request->alasan,
-            ]);
-
-            // MANAJEMEN FISIK GUDANG (PINTAR & SELEKTIF MEMOTONG STOK)
-            if ($request->jenis_retur === 'fisik') {
-                $statusKondisi = $request->status_kondisi;
-                
-                if ($statusKondisi === 'rusak') {
-                    $stokRusakSebelumnya = $barang->stok_rusak ?? 0;
-                    $barang->update(['stok_rusak' => $stokRusakSebelumnya - $request->qty_retur]);
-                    
-                    StockHistory::record(
-                        $barang, -$request->qty_retur, 'return_supplier', $noReturAuto . ' / ' . $noPO, 
-                        'Retur fisik BARANG RUSAK ke supplier. [DN: '.$nomorDN.']', $stokRusakSebelumnya
-                    );
-                } else {
-                    $stokSebelumnya = $barang->stok_akhir;
-                    $barang->update([
-                        'stok_akhir' => $barang->stok_akhir - $request->qty_retur,
-                        'barang_keluar' => $barang->barang_keluar + $request->qty_retur,
-                    ]);
-                    
-                    StockHistory::record(
-                        $barang, -$request->qty_retur, 'return_supplier', $noReturAuto . ' / ' . $noPO, 
-                        'Retur fisik BARANG BAGUS ke supplier. [DN: '.$nomorDN.']', $stokSebelumnya
-                    );
+            
+            // Tentukan referensi_id untuk CreditNote
+            $utang = null;
+            $refIdForDN = $pembelian->id;
+            
+            $allPembelianIds = Pembelian::where('no_pembelian', $noPO)->pluck('id');
+            $utang = Utang::whereIn('pembelian_id', $allPembelianIds)->first();
+            if ($utang) {
+                $refIdForDN = $utang->pembelian_id;
+            } else {
+                $firstId = Pembelian::where('no_pembelian', $noPO)->orderBy('id', 'asc')->value('id');
+                if ($firstId) {
+                    $refIdForDN = $firstId;
                 }
             }
 
-            // PERUBAHAN AKUNTANSI: Mengisi kolom potongan_dn BUKAN tabel pembayaran tunai
-            $utang = Utang::where('pembelian_id', $request->pembelian_id)->first();
+            CreditNote::create([
+                'nomor_cn' => $nomorDN, 
+                'tipe' => 'pembelian',
+                'referensi_id' => $refIdForDN,
+                'nominal' => $totalPotonganBatch,
+                'keterangan' => 'Debit Note terbit akibat klaim retur pembelian massal ke supplier: ' . implode('; ', $alasanCombined),
+            ]);
+
+            // Potong utang
             if ($utang) {
-                // Tambahkan nilai ke kolom potongan DN agar terpisah dari pembayaran fisik
-                $utang->potongan_dn = $utang->potongan_dn + $nominalPotongan;
+                $utang->potongan_dn = $utang->potongan_dn + $totalPotonganBatch;
                 
                 $sisaTagihan = $utang->total_utang - $utang->potongan_dn - $utang->total_dibayar;
                 if ($sisaTagihan <= 0) {
@@ -409,12 +550,12 @@ class ReturController extends Controller
             ActivityLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'RETUR PEMBELIAN',
-                'description' => Auth::user()->name . ' memproses klaim retur pembelian (Debit Note): ' . $noReturAuto,
+                'description' => Auth::user()->name . ' memproses klaim retur pembelian massal (Debit Note): ' . $noReturAuto,
                 'ip_address' => request()->ip(),
             ]);
 
             DB::commit();
-            return redirect()->back()->with('success', 'Retur Manual & Debit Note berhasil diproses. Beban utang ke supplier berhasil dipotong secara sah!');
+            return redirect()->route('retur.pembelian.index')->with('success', 'Retur Pembelian Massal & Debit Note berhasil diproses. Beban utang ke supplier berhasil dipotong!');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -429,55 +570,98 @@ class ReturController extends Controller
     {
         DB::beginTransaction();
         try {
-            // Ambil data retur yang masih pending
+            // Ambil data retur utama yang diklik
             $returData = DB::table('returs')->where('id', $id)->first();
             
             if (!$returData || $returData->status_retur !== 'pending') {
-                return redirect()->back()->withErrors(['error' => 'Klaim Retur tidak valid atau sudah dieksekusi sebelumnya.']);
+                return redirect()->back()->withErrors(['error' => 'Klaim Return tidak valid atau sudah dieksekusi sebelumnya.']);
             }
 
-            $pembelian = Pembelian::find($returData->referensi_id);
-            $barang = Barang::find($returData->barang_id);
+            // Ambil semua item return yang berbagi no_retur yang sama dan masih pending
+            $returItems = DB::table('returs')
+                ->where('no_retur', $returData->no_retur)
+                ->where('status_retur', 'pending')
+                ->get();
 
-            // 1. Eksekusi Potong Stok Rusak (Jika jenis retur fisik / RMA)
-            if ($returData->jenis_retur === 'fisik' && strtolower($returData->kondisi) === 'rusak') {
-                $stokRusakSekarang = $barang->stok_rusak ?? 0;
+            if ($returItems->isEmpty()) {
+                return redirect()->back()->withErrors(['error' => 'Tidak ada item return pending ditemukan.']);
+            }
+
+            $totalNominalPotongan = 0;
+            $alasanCombined = [];
+
+            foreach ($returItems as $item) {
+                $pembelian = Pembelian::find($item->referensi_id);
+                $barang = Barang::find($item->barang_id);
                 
-                // Pastikan stok rusak di gudang cukup untuk dikembalikan
-                // Jika kurang, artinya barang rusak sudah terpakai/terbuang tanpa prosedur
-                if ($stokRusakSekarang < $returData->qty) {
-                    // Jika stok kurang, potong seadanya agar tidak minus
-                    $qtyYangBisaDipotong = $stokRusakSekarang;
-                    $barang->update(['stok_rusak' => 0]);
-                } else {
-                    $qtyYangBisaDipotong = $returData->qty;
-                    $barang->update(['stok_rusak' => $stokRusakSekarang - $returData->qty]);
+                if (!$pembelian || !$barang) continue;
+
+                // 1. Eksekusi Potong Stok Rusak (Jika jenis retur fisik / RMA)
+                if ($item->jenis_retur === 'fisik' && strtolower($item->kondisi) === 'rusak') {
+                    $stokRusakSekarang = $barang->stok_rusak ?? 0;
+                    
+                    if ($stokRusakSekarang < $item->qty) {
+                        $qtyYangBisaDipotong = $stokRusakSekarang;
+                        $barang->update(['stok_rusak' => 0]);
+                    } else {
+                        $qtyYangBisaDipotong = $item->qty;
+                        $barang->update(['stok_rusak' => $stokRusakSekarang - $item->qty]);
+                    }
+
+                    if ($qtyYangBisaDipotong > 0) {
+                        StockHistory::record(
+                            $barang, -$qtyYangBisaDipotong, 'return_supplier', $item->no_retur . ' / ' . ($pembelian->no_pembelian ?? '-'), 
+                            'Eksekusi RMA. Fisik BARANG RUSAK dari hasil QC telah dikirim ke supplier.', $stokRusakSekarang
+                        );
+                    }
                 }
 
-                // Catat di kartu stok
-                if ($qtyYangBisaDipotong > 0) {
-                    StockHistory::record(
-                        $barang, -$qtyYangBisaDipotong, 'return_supplier', $returData->no_retur . ' / ' . ($pembelian->no_pembelian ?? '-'), 
-                        'Eksekusi RMA. Fisik BARANG RUSAK dari hasil QC telah dikirim ke supplier.', $stokRusakSekarang
-                    );
+                // Akumulasikan nominal potongan
+                $totalNominalPotongan += (float) $item->nominal_potongan;
+                $alasanCombined[] = $item->alasan;
+
+                // Ubah status item retur menjadi Completed
+                DB::table('returs')->where('id', $item->id)->update([
+                    'status_retur' => 'completed',
+                    'updated_at' => now()
+                ]);
+            }
+
+            // 2. Terbitkan 1 Debit Note Resmi untuk seluruh nomor return tersebut
+            $nomorDN = 'DN-QC-' . date('Ymd') . rand(100, 999);
+            
+            // Cari pembelian terkait untuk mendapatkan nomor PO dan utang
+            $pembelian = Pembelian::find($returData->referensi_id);
+            $utang = null;
+            $refIdForDN = $returData->referensi_id;
+
+            if ($pembelian) {
+                // Cari semua ID pembelian dengan nomor PO yang sama
+                $allPembelianIds = Pembelian::where('no_pembelian', $pembelian->no_pembelian)->pluck('id');
+                // Cari Utang yang merujuk ke salah satu dari ID pembelian tersebut
+                $utang = Utang::whereIn('pembelian_id', $allPembelianIds)->first();
+                if ($utang) {
+                    $refIdForDN = $utang->pembelian_id;
+                } else {
+                    $firstId = Pembelian::where('no_pembelian', $pembelian->no_pembelian)->orderBy('id', 'asc')->value('id');
+                    if ($firstId) {
+                        $refIdForDN = $firstId;
+                    }
                 }
             }
 
-            // 2. Terbitkan Debit Note Resmi
-            $nomorDN = 'DN-QC-' . date('Ymd') . rand(100, 999);
             CreditNote::create([
                 'nomor_cn' => $nomorDN, 
                 'tipe' => 'pembelian',
-                'referensi_id' => $returData->referensi_id,
-                'nominal' => $returData->nominal_potongan,
-                'keterangan' => 'Eksekusi Debit Note dari QC: ' . $returData->alasan,
+                'referensi_id' => $refIdForDN, // Gunakan referensi_id yang sesuai dengan Utang
+                'nominal' => $totalNominalPotongan,
+                'keterangan' => 'Eksekusi Debit Note dari QC (' . $returData->no_retur . '): ' . implode('; ', array_unique($alasanCombined)),
             ]);
 
-            // 3. Eksekusi Pemotongan Utang (Adjustment, BUKAN Kas Keluar)
-            $utang = Utang::where('pembelian_id', $returData->referensi_id)->first();
+            // 3. Eksekusi Pemotongan Utang (Adjustment pada Utang utama)
             if ($utang) {
-                // Tambahkan nilai ke kolom khusus potongan_dn
-                $utang->potongan_dn = $utang->potongan_dn + $returData->nominal_potongan;
+                // Tambahkan total potongan ke potongan_dn
+                $utang->potongan_dn = $utang->potongan_dn + $totalNominalPotongan;
                 
                 $sisaTagihan = $utang->total_utang - $utang->potongan_dn - $utang->total_dibayar;
                 if ($sisaTagihan <= 0) {
@@ -490,14 +674,15 @@ class ReturController extends Controller
                 $utang->save();
             }
 
-            // 4. Ubah status retur menjadi Completed
-            DB::table('returs')->where('id', $id)->update([
-                'status_retur' => 'completed',
-                'updated_at' => now()
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'RETUR PEMBELIAN',
+                'description' => Auth::user()->name . ' memproses eksekusi massal retur pembelian (Debit Note): ' . $returData->no_retur,
+                'ip_address' => request()->ip(),
             ]);
 
             DB::commit();
-            return redirect()->back()->with('success', 'RMA Berhasil Dieksekusi! Fisik barang rusak telah dipotong, dan tagihan utang supplier otomatis dikurangi senilai Rp '.number_format($returData->nominal_potongan,0,',','.'));
+            return redirect()->back()->with('success', 'RMA Berhasil Dieksekusi untuk seluruh produk di No. Return ' . $returData->no_retur . '! Fisik barang telah dipotong, dan tagihan utang supplier dikurangi senilai Rp ' . number_format($totalNominalPotongan,0,',','.'));
 
         } catch (\Exception $e) {
             DB::rollback();

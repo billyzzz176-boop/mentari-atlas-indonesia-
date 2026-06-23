@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Faktur Penjualan - {{ str_replace('SO', 'INV', $penjualan->no_so) }}</title>
+    <title>Faktur Penjualan - {{ $pengiriman->no_invoice }}</title>
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -237,6 +237,41 @@
             .container::before { height: 6px; }
         }
 
+        @media (max-width: 768px) {
+            body { padding: 10px 0; background: #e2e8f0; }
+            .container { padding: 25px 15px; box-shadow: none; border-radius: 8px; }
+            .header { flex-direction: column; gap: 20px; align-items: stretch; margin-bottom: 25px; }
+            .invoice-details { align-items: flex-start; text-align: left; }
+            .invoice-details h2 { margin: 0 0 5px 0; font-size: 26px; }
+            .info-grid { grid-template-columns: 1fr; gap: 20px; margin-bottom: 25px; }
+            .totals-table { width: 100%; }
+            .summary-section { justify-content: stretch; }
+            .signature { margin-top: 20px; }
+            .signature td { display: block; width: 100%; margin-bottom: 40px; text-align: left; }
+            .signature-line { margin-top: 40px; width: 180px; }
+            
+            /* Responsive table behavior */
+            .table-responsive-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin-bottom: 20px;
+                border-radius: 8px;
+                border: 1px solid var(--slate-200);
+            }
+            .items-table { margin-bottom: 0; border: none; width: 100%; min-width: 600px; }
+            .items-table th, .items-table td { padding: 10px; font-size: 11px; }
+            
+            .controls-bar {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            .controls-bar div { text-align: center; }
+            .btn-print, .btn-back { display: block; text-align: center; width: 100%; margin: 5px 0; }
+        }
+
         .controls-bar {
             text-align: right; 
             margin-bottom: 30px; 
@@ -303,7 +338,7 @@
             </div>
             <div class="invoice-details">
                 <h2>INVOICE</h2>
-                <div class="invoice-number">{{ str_replace('SO', 'INV', $penjualan->no_so) }}</div>
+                <div class="invoice-number">{{ $pengiriman->no_invoice }}</div>
             </div>
         </div>
 
@@ -313,15 +348,15 @@
                 <table class="info-table">
                     <tr>
                         <td class="info-label">Kepada Yth.</td>
-                        <td class="info-value">{{ $penjualan->customer->nama_customer }}</td>
+                        <td class="info-value">{{ $pengiriman->penjualan->customer->nama_customer }}</td>
                     </tr>
                     <tr>
                         <td class="info-label">Alamat</td>
-                        <td class="info-value"><span class="editable" contenteditable="true">{{ $penjualan->customer->alamat ?? 'Isi alamat lengkap di sini...' }}</span></td>
+                        <td class="info-value"><span class="editable" contenteditable="true">{{ $pengiriman->penjualan->customer->alamat ?? 'Isi alamat lengkap di sini...' }}</span></td>
                     </tr>
                     <tr>
                         <td class="info-label">Telepon</td>
-                        <td class="info-value"><span class="editable" contenteditable="true">{{ $penjualan->customer->no_telepon ?? '-' }}</span></td>
+                        <td class="info-value"><span class="editable" contenteditable="true">{{ $pengiriman->penjualan->customer->no_telepon ?? '-' }}</span></td>
                     </tr>
                 </table>
             </div>
@@ -331,73 +366,56 @@
                 <table class="info-table">
                     <tr>
                         <td class="info-label">Tanggal Invoice</td>
-                        <td class="info-value"><span class="editable" contenteditable="true">{{ date('d M Y') }}</span></td>
+                        <td class="info-value"><span class="editable" contenteditable="true">{{ \Carbon\Carbon::parse($pengiriman->tanggal_kirim)->format('d M Y') }}</span></td>
                     </tr>
                     <tr>
                         <td class="info-label">Jatuh Tempo</td>
-                        <td class="info-value"><span class="editable" contenteditable="true">{{ \Carbon\Carbon::now()->addDays(30)->format('d M Y') }}</span></td>
+                        <td class="info-value"><span class="editable" contenteditable="true">{{ \Carbon\Carbon::parse($pengiriman->tanggal_kirim)->addDays((int)($pengiriman->penjualan->customer->tempo_hari ?? 30))->format('d M Y') }}</span></td>
                     </tr>
                     <tr>
                         <td class="info-label">Referensi SO</td>
-                        <td class="info-value">{{ $penjualan->no_so }}</td>
+                        <td class="info-value">{{ $pengiriman->penjualan->no_so }}</td>
                     </tr>
                 </table>
             </div>
         </div>
 
-        @php
-            $backorders = \App\Models\BackOrder::where('penjualan_id', $penjualan->id)->get()->keyBy('barang_id');
-        @endphp
+        <div class="table-responsive-wrapper">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No</th>
+                        <th width="45%">Deskripsi Barang</th>
+                        <th width="10%" class="text-center">Qty</th>
+                        <th width="20%" class="text-end">Harga Satuan (Rp)</th>
+                        <th width="20%" class="text-end">Subtotal (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($pengiriman->details as $index => $detail)
+                    <tr>
+                        <td class="text-center">{{ $index + 1 }}</td>
+                        <td>
+                            <strong style="color: var(--slate-900);">{{ $detail->barang->nama_barang }}</strong>
+                        </td>
+                        <td class="text-center"><strong>{{ $detail->jumlah_kirim }}</strong></td>
+                        <td class="text-end"><span class="editable" contenteditable="true">{{ number_format($detail->harga_satuan, 0, ',', '.') }}</span></td>
+                        <td class="text-end"><strong style="color: var(--slate-900);"><span class="editable" contenteditable="true">{{ number_format($detail->subtotal, 0, ',', '.') }}</span></strong></td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th width="5%" class="text-center">No</th>
-                    <th width="45%">Deskripsi Barang</th>
-                    <th width="10%" class="text-center">Qty</th>
-                    <th width="20%" class="text-end">Harga Satuan (Rp)</th>
-                    <th width="20%" class="text-end">Subtotal (Rp)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($penjualan->details as $index => $detail)
-                @php
-                    $bo = $backorders->get($detail->barang_id);
-                    $qtyPesan = $detail->jumlah;
-                    $statusTeks = 'normal';
-                    
-                    if($bo) {
-                        $statusTeks = (strtolower($bo->status_bo) === 'terpenuhi' || strtolower($bo->status_bo) === 'selesai') ? 'lunas' : 'hutang';
-                    }
-                @endphp
-                <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td>
-                        <strong style="color: var(--slate-900);">{{ $detail->barang->nama_barang }}</strong>
-                        
-                        @if($statusTeks === 'hutang')
-                            <span class="bo-note editable" contenteditable="true">
-                                <strong>PENTING:</strong> Pengiriman parsial (Dikirim: {{ $qtyPesan - $bo->jumlah_kurang }}, Sisa menunggu: {{ $bo->jumlah_kurang }}). Tagihan ini meliputi total keseluruhan pesanan.
-                            </span>
-                        @elseif($statusTeks === 'lunas')
-                            <span class="bo-success editable" contenteditable="true">
-                                ✔ Sisa Back Order sejumlah {{ $bo->jumlah_kurang }} telah dikirim. Komoditas lengkap.
-                            </span>
-                        @endif
-                    </td>
-                    <td class="text-center"><strong>{{ $qtyPesan }}</strong></td>
-                    <td class="text-end"><span class="editable" contenteditable="true">{{ number_format($detail->harga_satuan, 0, ',', '.') }}</span></td>
-                    <td class="text-end"><strong style="color: var(--slate-900);"><span class="editable" contenteditable="true">{{ number_format($detail->subtotal, 0, ',', '.') }}</span></strong></td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+        @php
+            $subtotalShipment = $pengiriman->details->sum('subtotal');
+        @endphp
 
         <div class="summary-section">
             <table class="totals-table">
                 <tr>
                     <td>Subtotal</td>
-                    <td class="text-end"><span class="editable" contenteditable="true">{{ number_format($penjualan->total_semua, 0, ',', '.') }}</span></td>
+                    <td class="text-end"><span class="editable" contenteditable="true">{{ number_format($subtotalShipment, 0, ',', '.') }}</span></td>
                 </tr>
                 <tr>
                     <td>Pajak (0%)</td>
@@ -405,7 +423,7 @@
                 </tr>
                 <tr class="grand-total">
                     <td>TOTAL TAGIHAN</td>
-                    <td class="text-end">Rp <span class="editable" contenteditable="true">{{ number_format($penjualan->total_semua, 0, ',', '.') }}</span></td>
+                    <td class="text-end">Rp <span class="editable" contenteditable="true">{{ number_format($subtotalShipment, 0, ',', '.') }}</span></td>
                 </tr>
             </table>
         </div>
@@ -431,7 +449,7 @@
                 </td>
                 <td>
                     Menyetujui,<br>
-                    <strong>{{ $penjualan->customer->nama_customer }}</strong><br>
+                    <strong>{{ $pengiriman->penjualan->customer->nama_customer }}</strong><br>
                     <br>
                     <br>
                     <div class="signature-line"></div><br>

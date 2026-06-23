@@ -60,12 +60,12 @@
 <div class="container-fluid py-4" style="background-color: #f8fafc; min-height: 80vh;">
     
     {{-- HEADER --}}
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
             <h1 class="h3 mb-0 text-slate-dark fw-bold"><i class="fas fa-shopping-cart text-emerald-custom me-2"></i>Buat Sales Order Baru</h1>
             <p class="text-slate-muted small mb-0 mt-1">Input data pelanggan dan pilih barang untuk memproses SPK / Nota Penjualan.</p>
         </div>
-        <a href="{{ route('penjualan.index') }}" class="btn btn-light shadow-sm rounded-pill px-4 border fw-bold text-slate-dark">
+        <a href="{{ route('penjualan.index') }}" class="btn btn-light shadow-sm rounded-pill px-4 border fw-bold text-slate-dark text-nowrap">
             <i class="fas fa-arrow-left me-2"></i> Kembali
         </a>
     </div>
@@ -85,17 +85,22 @@
                             <label class="form-label small fw-bold text-slate-dark mb-1">Pilih Customer / Toko *</label>
                             <select name="customer_id" id="customer_id" class="form-select bg-light fw-bold text-slate-dark select2" onchange="applyCustomerData()" required>
                                 <option value="" data-nama="" data-tingkat="Bronze" data-npwp="" data-ktp="" selected disabled>-- Pilih Pelanggan --</option>
-                                @foreach($customers as $c)
-                                    <option value="{{ $c->id }}" 
-                                            data-nama="{{ $c->nama_customer }}" 
-                                            data-tingkat="{{ $c->tingkat_customer ?? 'Bronze' }}"
-                                            data-npwp="{{ $c->npwp }}"
-                                            data-ktp="{{ $c->ktp }}">
-                                        {{ $c->nama_customer }} [{{ $c->tingkat_customer ?? 'Bronze' }}] - Rp{{ number_format($c->plafon, 0, ',', '.') }}
-                                    </option>
-                                @endforeach
+                                                                    @foreach($customers as $c)
+                                        <option value="{{ $c->id }}" 
+                                                data-nama="{{ $c->nama_customer }}" 
+                                                data-tingkat="{{ $c->tingkat_customer ?? 'Bronze' }}"
+                                                data-npwp="{{ $c->npwp }}"
+                                                data-ktp="{{ $c->ktp }}"
+                                                data-sisa-plafon="{{ $c->sisa_plafon ?? $c->plafon }}">
+                                            {{ $c->nama_customer }} [{{ $c->tingkat_customer ?? 'Bronze' }}] - Sisa Rp{{ number_format($c->sisa_plafon ?? $c->plafon, 0, ',', '.') }}
+                                        </option>
+                                    @endforeach
                             </select>
                             <input type="hidden" name="nama_customer" id="nama_customer_hidden">
+                            <div id="sisa_limit_container" class="mt-2 p-2 rounded d-none" style="background-color: #d1fae5; border-left: 4px solid #10b981;">
+                                <span class="small fw-bold text-emerald-custom"><i class="fas fa-wallet me-1"></i> Sisa Limit Kredit:</span>
+                                <span class="fw-bold text-slate-dark ms-1" id="text_sisa_limit">Rp 0</span>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
@@ -123,46 +128,41 @@
 
                     {{-- Datalist removed and replaced by custom search dropdown --}}
 
-                    <div class="card-body p-0 flex-grow-1">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-mentari-compact align-middle mb-0" id="tabelBarang" style="font-size: 0.85rem;">
-                                <thead class="table-custom-header">
-                                    <tr>
-                                        <th class="ps-4" width="40%">Pencarian (SKU / Nama)</th>
-                                        <th class="text-center" width="15%">Stok Fisik</th>
-                                        <th class="text-end" width="20%">Harga (Rp)</th>
-                                        <th class="text-center" width="15%">Qty Jual</th>
-                                        <th class="text-center pe-4" width="10%">Hapus</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="bodyBarang">
-                                    <tr class="baris-barang">
-                                        <td class="ps-4">
-                                            <div class="position-relative input-search-container">
-                                                <input type="text" class="form-control form-control-sm bg-light fw-medium text-slate-dark input-cari-barang" 
-                                                       placeholder="Ketik SKU atau Nama..." 
-                                                       oninput="cariBarang(this)" onfocus="cariBarang(this)" onblur="hideDropdown(this)" autocomplete="off" required>
-                                                <input type="hidden" name="barang_id[]" class="input-barang-id" required>
-                                                <div class="search-dropdown-menu d-none position-absolute w-100 bg-white border rounded shadow-sm overflow-auto"></div>
-                                            </div>
-                                        </td>
-                                        <td>
+                    <div class="card-body p-3 flex-grow-1" style="background-color: var(--bg-page);">
+                        <div id="bodyBarang" class="d-flex flex-column gap-3">
+                            <div class="card shadow-sm border-0 baris-barang" style="border-radius: 12px; border-left: 4px solid #10b981 !important;">
+                                <div class="card-body p-3">
+                                    <div class="position-relative input-search-container mb-3">
+                                        <label class="small fw-bold text-slate-dark mb-1">Cari Barang (SKU/Nama)</label>
+                                        <input type="text" class="form-control form-control-sm bg-light fw-medium text-slate-dark input-cari-barang py-2" 
+                                               placeholder="Ketik SKU atau Nama..." 
+                                               oninput="cariBarang(this)" onfocus="cariBarang(this)" onblur="hideDropdown(this)" autocomplete="off" required>
+                                        <input type="hidden" name="barang_id[]" class="input-barang-id" required>
+                                        <div class="search-dropdown-menu d-none position-absolute w-100 bg-white border rounded shadow-sm overflow-auto" style="z-index: 1000;"></div>
+                                    </div>
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-4">
+                                            <label class="small text-slate-muted mb-1">Stok</label>
                                             <input type="text" class="form-control form-control-sm bg-white text-center border-0 input-stok fw-bold text-slate-muted" readonly placeholder="-">
-                                        </td>
-                                        <td>
-                                            <input type="number" name="harga_satuan[]" class="form-control form-control-sm text-end input-harga fw-bold text-slate-dark bg-light" required min="0" placeholder="0" oninput="hitungTotalAll()">
-                                        </td>
-                                        <td>
-                                            <input type="number" name="jumlah[]" class="form-control form-control-sm text-center input-jumlah fw-bold text-emerald-custom bg-light" required min="1" value="1" oninput="hitungTotalAll()">
-                                        </td>
-                                        <td class="text-center pe-4">
-                                            <button type="button" class="btn-action-circle btn-delete-custom btn-delete-item" onclick="hapusBaris(this)" disabled>
+                                        </div>
+                                        <div class="col-8">
+                                            <label class="small text-slate-muted mb-1">Harga (Rp)</label>
+                                            <input type="number" name="harga_satuan[]" class="form-control form-control-sm text-end input-harga fw-bold text-slate-dark bg-light py-2" required min="0" placeholder="0" oninput="hitungTotalAll()">
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 align-items-end mt-2">
+                                        <div class="col-9">
+                                            <label class="small text-slate-muted mb-1">Qty Jual</label>
+                                            <input type="number" name="jumlah[]" class="form-control form-control-sm text-center input-jumlah fw-bold text-emerald-custom bg-light py-2" required min="1" value="1" oninput="hitungTotalAll()">
+                                        </div>
+                                        <div class="col-3 text-end">
+                                            <button type="button" class="btn btn-sm btn-danger-soft w-100 py-2 btn-delete-item fw-bold" style="border-radius: 8px;" onclick="hapusBaris(this)" disabled>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -185,39 +185,51 @@
 <script>
     function tambahBaris() {
         const tbody = document.getElementById('bodyBarang');
-        const tr = document.createElement('tr');
-        tr.className = 'baris-barang';
+        const tr = document.createElement('div');
+        tr.className = 'card shadow-sm border-0 baris-barang';
+        tr.style.borderRadius = '12px';
+        tr.style.borderLeft = '4px solid #10b981';
         tr.innerHTML = `
-            <td class="ps-4">
-                                <div class="position-relative input-search-container">
-                                    <input type="text" class="form-control form-control-sm bg-light fw-medium text-slate-dark input-cari-barang" 
-                                           placeholder="Ketik SKU atau Nama..." 
-                                           oninput="cariBarang(this)" onfocus="cariBarang(this)" onblur="hideDropdown(this)" autocomplete="off" required>
-                                    <input type="hidden" name="barang_id[]" class="input-barang-id" required>
-                                    <div class="search-dropdown-menu d-none position-absolute w-100 bg-white border rounded shadow-sm overflow-auto"></div>
-                                </div>
-                            </td>
-            <td>
-                <input type="text" class="form-control form-control-sm bg-white text-center border-0 input-stok fw-bold text-slate-muted" readonly placeholder="-">
-            </td>
-            <td>
-                <input type="number" name="harga_satuan[]" class="form-control form-control-sm text-end input-harga fw-bold text-slate-dark bg-light" required min="0" placeholder="0" oninput="hitungTotalAll()">
-            </td>
-            <td>
-                <input type="number" name="jumlah[]" class="form-control form-control-sm text-center input-jumlah fw-bold text-emerald-custom bg-light" required min="1" value="1" oninput="hitungTotalAll()">
-            </td>
-            <td class="text-center pe-4">
-                <button type="button" class="btn-action-circle btn-delete-custom btn-delete-item" onclick="hapusBaris(this)">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </td>
+            <div class="card-body p-3">
+                <div class="position-relative input-search-container mb-3">
+                    <label class="small fw-bold text-slate-dark mb-1">Cari Barang (SKU/Nama)</label>
+                    <input type="text" class="form-control form-control-sm bg-light fw-medium text-slate-dark input-cari-barang py-2" 
+                           placeholder="Ketik SKU atau Nama..." 
+                           oninput="cariBarang(this)" onfocus="cariBarang(this)" onblur="hideDropdown(this)" autocomplete="off" required>
+                    <input type="hidden" name="barang_id[]" class="input-barang-id" required>
+                    <div class="search-dropdown-menu d-none position-absolute w-100 bg-white border rounded shadow-sm overflow-auto" style="z-index: 1000;"></div>
+                </div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-4">
+                        <label class="small text-slate-muted mb-1">Stok</label>
+                        <input type="text" class="form-control form-control-sm bg-white text-center border-0 input-stok fw-bold text-slate-muted" readonly placeholder="-">
+                    </div>
+                    <div class="col-8">
+                        <label class="small text-slate-muted mb-1">Harga (Rp)</label>
+                        <input type="number" name="harga_satuan[]" class="form-control form-control-sm text-end input-harga fw-bold text-slate-dark bg-light py-2" required min="0" placeholder="0" oninput="hitungTotalAll()">
+                    </div>
+                </div>
+                <div class="row g-2 align-items-end mt-2">
+                    <div class="col-9">
+                        <label class="small text-slate-muted mb-1">Qty Jual</label>
+                        <input type="number" name="jumlah[]" class="form-control form-control-sm text-center input-jumlah fw-bold text-emerald-custom bg-light py-2" required min="1" value="1" oninput="hitungTotalAll()">
+                    </div>
+                    <div class="col-3 text-end">
+                        <button type="button" class="btn btn-sm btn-danger-soft w-100 py-2 btn-delete-item fw-bold" style="border-radius: 8px;" onclick="hapusBaris(this)">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         `;
+        // Inject !important style directly for border-left
+        tr.setAttribute('style', 'border-radius: 12px; border-left: 4px solid #10b981 !important;');
         tbody.appendChild(tr);
         updateTombolHapus();
     }
 
     function hapusBaris(button) {
-        button.closest('tr').remove();
+        button.closest('.baris-barang').remove();
         updateTombolHapus();
         hitungTotalAll();
     }
@@ -285,7 +297,7 @@
     }
 
     function pilihBarangManual(element, id) {
-        const row = element.closest('tr');
+        const row = element.closest('.baris-barang');
         const inputCari = row.querySelector('.input-cari-barang');
         const hiddenId = row.querySelector('.input-barang-id');
         const inputStok = row.querySelector('.input-stok');
@@ -371,6 +383,16 @@
             // 2. Auto-Fill NPWP & KTP
             document.getElementById('input_npwp').value = opt.getAttribute('data-npwp') || '';
             document.getElementById('input_ktp').value = opt.getAttribute('data-ktp') || '';
+            
+            // 2b. Show Sisa Limit
+            const sisaLimit = opt.getAttribute('data-sisa-plafon');
+            if(sisaLimit) {
+                const limitValue = parseFloat(sisaLimit);
+                document.getElementById('text_sisa_limit').innerText = 'Rp ' + limitValue.toLocaleString('id-ID');
+                document.getElementById('sisa_limit_container').classList.remove('d-none');
+            } else {
+                document.getElementById('sisa_limit_container').classList.add('d-none');
+            }
             
             // 3. Update Harga Semua Barang
             const rows = document.querySelectorAll('.baris-barang');

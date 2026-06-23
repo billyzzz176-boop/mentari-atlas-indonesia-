@@ -41,7 +41,7 @@
         .form-control-custom {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            padding: 0.75rem 2.5rem 0.75rem 2.5rem;
             border-radius: 0.5rem;
             transition: all 0.2s;
         }
@@ -51,29 +51,24 @@
             box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
             outline: none;
         }
-        .input-icon {
-            position: absolute;
-            top: 1rem; /* Adjust based on input padding-top */
-            left: 1rem;
-            /* remove transform: translateY(-50%) to prevent shifting when error messages appear */
-            color: #94a3b8;
-            z-index: 10;
-            line-height: 1; /* Ensure icon uses its natural height */
-            height: 1.5rem; /* Match input's line-height */
-            display: flex;
-            align-items: center;
-        }
+
         .password-toggle-icon {
             position: absolute;
-            top: 1rem; /* Align vertically with input-icon */
+            top: 50%; /* Center vertically perfectly */
+            transform: translateY(-50%);
             right: 1rem; /* Position on the right */
             color: #94a3b8;
-            z-index: 10;
+            z-index: 100;
             cursor: pointer;
-            line-height: 1;
-            height: 1.5rem;
-            display: flex;
-            align-items: center;
+            padding: 0.5rem; /* Make it easier to click */
+        }
+        .input-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 1rem;
+            color: #94a3b8;
+            z-index: 10;
         }
         .password-toggle-icon:hover {
             color: #64748b;
@@ -171,23 +166,27 @@
                     @csrf
                     
                     {{-- Input Email --}}
-                    <div class="mb-4 position-relative">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input id="email" type="email" class="form-control form-control-custom w-100 @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="Alamat Email">
+                    <div class="mb-4">
+                        <div class="position-relative">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input id="email" type="email" class="form-control form-control-custom w-100 @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="Alamat Email">
+                        </div>
                         @error('email')
-                            <span class="invalid-feedback" role="alert">
+                            <span class="invalid-feedback d-block mt-1 fw-medium" role="alert" style="font-size: 0.8rem;">
                                 <strong>{{ $message }}</strong>
                             </span>
                         @enderror
                     </div>
 
                     {{-- Input Password --}}
-                    <div class="mb-4 position-relative">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input id="password" type="password" class="form-control form-control-custom w-100 @error('password') is-invalid @enderror" name="password" required autocomplete="current-password" placeholder="Kata Sandi">
-                        <i class="fas fa-eye password-toggle-icon" id="togglePassword"></i> {{-- Eye icon for password toggle --}}
+                    <div class="mb-4">
+                        <div class="position-relative">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input id="password" type="password" class="form-control form-control-custom w-100 @error('password') is-invalid @enderror" name="password" required autocomplete="current-password" placeholder="Kata Sandi">
+                            <i class="fas fa-eye password-toggle-icon" id="togglePassword"></i> {{-- Eye icon for password toggle --}}
+                        </div>
                         @error('password')
-                            <span class="invalid-feedback" role="alert">
+                            <span class="invalid-feedback d-block mt-1 fw-medium" role="alert" style="font-size: 0.8rem;">
                                 <strong>{{ $message }}</strong>
                             </span>
                         @enderror

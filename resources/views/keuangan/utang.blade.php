@@ -214,7 +214,8 @@
             </table>
         </div>
         
-        <div class="d-block d-lg-none px-2 py-3">
+        {{-- MOBILE CARDS --}}
+        <div class="d-lg-none p-2">
             @forelse($utangs as $u)
                 @php
                 $listKataKunciDN = ['Debit Note', 'Debit Note / Retur Pembelian', 'Retur Pembelian / Debit Note', 'Retur Pembelian'];

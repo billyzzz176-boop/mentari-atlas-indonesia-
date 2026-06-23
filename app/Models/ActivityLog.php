@@ -19,6 +19,6 @@ class ActivityLog extends Model
     // Relasi untuk mengetahui nama User yang melakukan aksi
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 }

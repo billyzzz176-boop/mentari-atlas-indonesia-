@@ -17,10 +17,11 @@ class UserController extends Controller
         $users = User::orderByRaw("
             CASE 
                 WHEN role = 'direktur' THEN 1 
-                WHEN role = 'admin_keuangan' OR role = 'keuangan' THEN 2 
-                WHEN role = 'admin_warehouse' OR role = 'warehouse' THEN 3 
-                WHEN role = 'sales' THEN 4 
-                ELSE 5 
+                WHEN role = 'manager' THEN 2
+                WHEN role = 'admin_keuangan' OR role = 'keuangan' THEN 3 
+                WHEN role = 'admin_warehouse' OR role = 'warehouse' THEN 4 
+                WHEN role = 'sales' THEN 5 
+                ELSE 6 
             END
         ")->orderBy('name', 'asc')->get();
                      
@@ -33,7 +34,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,direktur,sales,admin_warehouse,admin_keuangan',
+            'role' => 'required|in:admin,direktur,sales,admin_warehouse,admin_keuangan,manager',
             'hak_akses' => 'nullable|array', // Tambahkan validasi array untuk hak akses
         ]);
 
@@ -63,7 +64,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'role' => 'required|in:admin,direktur,sales,admin_warehouse,admin_keuangan',
+            'role' => 'required|in:admin,direktur,sales,admin_warehouse,admin_keuangan,manager',
             'hak_akses' => 'nullable|array', // Tambahkan validasi array untuk hak akses
         ]);
 

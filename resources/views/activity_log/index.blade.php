@@ -47,7 +47,7 @@
         </div>
         
         <div class="card-body p-0">
-            <div class="table-responsive">
+            <div class="table-responsive d-none d-lg-block">
                 <table class="table align-middle mb-0" style="font-size: 0.85rem;">
                     <thead class="table-custom-header">
                         <tr>
@@ -110,6 +110,53 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- MOBILE CARDS --}}
+            <div class="d-lg-none p-3 bg-light">
+                @forelse($logs as $log)
+                    @php
+                        $actionClass = 'action-other';
+                        $actionUpper = strtoupper($log->action);
+                        if(str_contains($actionUpper, 'BUAT') || str_contains($actionUpper, 'TAMBAH')) $actionClass = 'action-create';
+                        elseif(str_contains($actionUpper, 'EDIT') || str_contains($actionUpper, 'UPDATE') || str_contains($actionUpper, 'SETUJU')) $actionClass = 'action-update';
+                        elseif(str_contains($actionUpper, 'HAPUS') || str_contains($actionUpper, 'TOLAK')) $actionClass = 'action-delete';
+                        elseif(str_contains($actionUpper, 'LOGIN')) $actionClass = 'action-login';
+                    @endphp
+                    <div class="card card-custom mb-3" style="border-radius: 12px;">
+                        <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e2e8f0;">
+                            <span class="badge badge-action {{ $actionClass }} rounded-pill">{{ $actionUpper }}</span>
+                            <span class="text-slate-muted small" style="font-size: 0.75rem;"><i class="far fa-clock me-1"></i> {{ $log->created_at->format('d/m/Y H:i') }}</span>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2 border" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user text-secondary" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <span class="fw-bold text-slate-dark d-block" style="font-size: 0.9rem;">{{ $log->user ? $log->user->name : 'Sistem / Auto' }}</span>
+                                    @if($log->user)
+                                        <span class="text-slate-muted" style="font-size: 0.75rem;">{{ strtoupper(str_replace('_', ' ', $log->user->role)) }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            <div class="bg-light p-2.5 rounded-3 border">
+                                <small class="text-muted d-block" style="font-size: 0.65rem; margin-bottom: 2px;">Deskripsi Aktivitas:</small>
+                                <span class="text-slate-dark fw-medium" style="font-size: 0.85rem;">{{ $log->description }}</span>
+                            </div>
+                            
+                            <div class="mt-2 text-end">
+                                <span class="text-slate-muted" style="font-family: monospace; font-size: 0.75rem;"><i class="fas fa-network-wired me-1"></i>{{ $log->ip_address ?? '-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="card p-5 text-center text-slate-muted bg-white shadow-sm" style="border-radius: 12px;">
+                        <i class="fas fa-search-minus fa-3x mb-3 opacity-25"></i>
+                        <span class="fw-bold text-slate-dark mb-1">Belum ada aktivitas</span>
+                    </div>
+                @endforelse
             </div>
         </div>
         

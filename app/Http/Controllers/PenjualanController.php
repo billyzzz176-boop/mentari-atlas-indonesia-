@@ -61,17 +61,27 @@ class PenjualanController extends Controller
     // =========================================================================
     // 2. TAMPILAN INDEX & SHOW
     // =========================================================================
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->input('search');
         $query = Penjualan::with(['customer', 'user', 'details.barang']);
         $role = strtolower(Auth::user()->role);
         
         if (in_array($role, ['sales', 'marketing'])) {
             $query->where('user_id', Auth::id());
         }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('no_so', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function ($q2) use ($search) {
+                      $q2->where('nama_customer', 'like', "%{$search}%");
+                  });
+            });
+        }
         
-        $pengajuan = $query->orderBy('created_at', 'asc')->get();
-        return view('penjualan.index', compact('pengajuan'));
+        $pengajuan = $query->orderBy('created_at', 'asc')->paginate(50)->withQueryString();
+        return view('penjualan.index', compact('pengajuan', 'search'));
     }
 
     public function show($id)
@@ -79,7 +89,7 @@ class PenjualanController extends Controller
         $penjualan = Penjualan::with(['customer', 'details.barang', 'user'])->findOrFail($id);
         $role = strtolower(Auth::user()->role);
 
-        if (in_array($role, ['sales', 'marketing']) && $penjualan->user_id !== Auth::id()) {
+        if (in_array($role, ['sales', 'marketing']) && $penjualan->user_id != Auth::id()) {
             abort(403, 'Akses ditolak. Anda hanya dapat melihat dokumen milik Anda sendiri.');
         }
         
@@ -116,7 +126,8 @@ class PenjualanController extends Controller
                 ]);
             }
 
-            $no_so = 'SO-' . date('Ymd') . '-' . str_pad(Penjualan::count() + 1, 4, '0', STR_PAD_LEFT);
+            $lastId = Penjualan::max('id') ?? 0;
+            $no_so = 'SO-' . date('Ymd') . '-' . str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
             
             $penjualan = Penjualan::create([
                 'no_so' => $no_so,
@@ -175,7 +186,7 @@ class PenjualanController extends Controller
     // =========================================================================
     public function approvalList()
     {
-        $pengajuan = Penjualan::with(['customer', 'details.barang', 'user'])->orderBy('created_at', 'asc')->get();
+        $pengajuan = Penjualan::with(['customer', 'details.barang', 'user'])->where('status_approval', 'pending')->orderBy('created_at', 'asc')->get();
         return view('penjualan.approval', compact('pengajuan'));
     }
 
@@ -206,7 +217,16 @@ class PenjualanController extends Controller
             }
 
             if ($request->status == 'disetujui') {
+                // Check if user is manager and it is over limit
+                if (strtolower(Auth::user()->role) === 'manager') {
+                    $sisa_limit = $penjualan->customer->sisa_plafon ?? 0;
+                    if ($penjualan->total_semua > $sisa_limit) {
+                        throw new \Exception('Akun staf dengan role Manager tidak diizinkan menyetujui pesanan yang melebihi limit kredit!');
+                    }
+                }
+
                 $penjualan->status_approval = 'disetujui';
+                $penjualan->status = 'diproses';
                 $penjualan->approved_at = now();
                 $penjualan->catatan = $request->catatan;
             } else {
@@ -291,7 +311,8 @@ class PenjualanController extends Controller
     // =========================================================================
     public function updateToPackingSelesai($id)
     {
-        $penjualan = Penjualan::with('details')->findOrFail($id);
+        // Gunakan lockForUpdate untuk mencegah Race Condition (Double Packing)
+        $penjualan = Penjualan::with('details')->lockForUpdate()->findOrFail($id);
         
         if ($penjualan->status_approval !== 'disetujui') {
             return back()->with('error', 'Gagal: Order harus disetujui oleh Direktur terlebih dahulu.');
@@ -311,14 +332,31 @@ class PenjualanController extends Controller
             $penjualan->save();
             
             $adaBackOrder = false;
+            $totalTagihanAwal = 0; // Tambahan: Hitung total tagihan hanya untuk barang yang terkirim
+
+            // Create Pengiriman record
+            $noSOBase = str_replace('SO-', '', $penjualan->no_so);
+            $noINVBase = str_replace('SO', 'INV', $penjualan->no_so);
+            $pengiriman = \App\Models\Pengiriman::create([
+                'penjualan_id' => $penjualan->id,
+                'no_pengiriman' => 'SJ-' . $noSOBase . '-1',
+                'no_invoice' => $noINVBase . '-1',
+                'tanggal_kirim' => now()->toDateString(),
+                'plat_kendaraan' => null,
+                'catatan' => 'Pengiriman Tahap 1 (Parsial/Full)',
+            ]);
 
             foreach ($penjualan->details as $detail) {
-                $barang = Barang::findOrFail($detail->barang_id);
+                // Kunci baris barang agar stok tidak direbut oleh transaksi lain yang berjalan bersamaan (Race Condition)
+                $barang = Barang::where('id', $detail->barang_id)->lockForUpdate()->firstOrFail();
                 $stokSebelumnya = $barang->stok_akhir;
 
                 // Logika Parsial: Kirim seadanya stok saat ini
                 $qtyDikirimSekarang = ($barang->stok_akhir >= $detail->jumlah) ? $detail->jumlah : max(0, $barang->stok_akhir);
                 $jumlahKurang = $detail->jumlah - $qtyDikirimSekarang;
+                
+                // Tambahan: Tambahkan nilai barang yang benar-benar terkirim saat ini ke Piutang
+                $totalTagihanAwal += ($qtyDikirimSekarang * $detail->harga_satuan);
 
                 $existingBo = $activeBackorders->where('barang_id', $barang->id)->first();
 
@@ -355,6 +393,14 @@ class PenjualanController extends Controller
                         'Pengiriman Packing (Parsial/Full).',
                         $stokSebelumnya
                     );
+
+                    \App\Models\PengirimanDetail::create([
+                        'pengiriman_id' => $pengiriman->id,
+                        'barang_id' => $barang->id,
+                        'jumlah_kirim' => $qtyDikirimSekarang,
+                        'harga_satuan' => $detail->harga_satuan,
+                        'subtotal' => $qtyDikirimSekarang * $detail->harga_satuan,
+                    ]);
                 }
             }
 
@@ -364,11 +410,11 @@ class PenjualanController extends Controller
                 ['no_invoice' => $no_invoice], 
                 [
                     'penjualan_id' => $penjualan->id,
-                    'total_tagihan' => $penjualan->total_semua,
+                    'total_tagihan' => $totalTagihanAwal, // Diubah agar sesuai jumlah terkirim
                     'potongan' => 0, 
                     'total_dibayar' => 0,
-                    'status_bayar' => 'Belum Lunas',
-                    'jatuh_tempo' => \Carbon\Carbon::now()->addDays($penjualan->customer->tempo_hari ?? 30),
+                    'status_bayar' => 'belum_bayar',
+                    'jatuh_tempo' => \Carbon\Carbon::now()->addDays((int)($penjualan->customer->tempo_hari ?? 30)),
                     'diinput_by' => Auth::id(),
                 ]
             );
@@ -399,16 +445,76 @@ class PenjualanController extends Controller
     // =========================================================================
     public function printFaktur($id)
     {
+        if (strtolower(Auth::user()->role) === 'sales') {
+            abort(403, 'Akses Ditolak: Sales tidak diizinkan mencetak dokumen faktur/surat jalan.');
+        }
         $penjualan = Penjualan::findOrFail($id);
-        if ($penjualan->status !== 'ready_to_invoice') abort(403);
-        return view('penjualan.faktur_print', compact('penjualan'));
+        if ($penjualan->status === 'draft') abort(403, 'Akses Ditolak: Pesanan masih draft dan tidak dapat dicetak.');
+        $pengiriman = \App\Models\Pengiriman::where('penjualan_id', $id)->orderBy('id', 'asc')->first();
+        if (!$pengiriman) abort(404, 'Pengiriman tidak ditemukan.');
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CETAK FAKTUR',
+            'description' => Auth::user()->name . ' mencetak Faktur untuk SO: ' . $penjualan->no_so,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return view('penjualan.faktur_print', compact('pengiriman'));
     }
 
     public function printSuratJalan($id)
     {
+        if (strtolower(Auth::user()->role) === 'sales') {
+            abort(403, 'Akses Ditolak: Sales tidak diizinkan mencetak dokumen faktur/surat jalan.');
+        }
         $penjualan = Penjualan::findOrFail($id);
-        if ($penjualan->status === 'draft') abort(403);
-        return view('penjualan.surat_jalan_print', compact('penjualan'));
+        if ($penjualan->status === 'draft') abort(403, 'Akses Ditolak: Pesanan masih draft dan tidak dapat dicetak.');
+        $pengiriman = \App\Models\Pengiriman::where('penjualan_id', $id)->orderBy('id', 'asc')->first();
+        if (!$pengiriman) abort(404, 'Pengiriman tidak ditemukan.');
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CETAK SURAT JALAN',
+            'description' => Auth::user()->name . ' mencetak Surat Jalan untuk SO: ' . $penjualan->no_so,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return view('penjualan.surat_jalan_print', compact('pengiriman'));
+    }
+
+    public function printFakturPengiriman($id)
+    {
+        if (strtolower(Auth::user()->role) === 'sales') {
+            abort(403, 'Akses Ditolak: Sales tidak diizinkan mencetak dokumen faktur/surat jalan.');
+        }
+        $pengiriman = \App\Models\Pengiriman::with(['penjualan.customer', 'details.barang'])->findOrFail($id);
+        
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CETAK FAKTUR PENGIRIMAN',
+            'description' => Auth::user()->name . ' mencetak Faktur untuk Pengiriman: ' . $pengiriman->no_pengiriman,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return view('penjualan.faktur_print', compact('pengiriman'));
+    }
+
+    public function printSuratJalanPengiriman($id)
+    {
+        if (strtolower(Auth::user()->role) === 'sales') {
+            abort(403, 'Akses Ditolak: Sales tidak diizinkan mencetak dokumen faktur/surat jalan.');
+        }
+        $pengiriman = \App\Models\Pengiriman::with(['penjualan.customer', 'details.barang'])->findOrFail($id);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CETAK SURAT JALAN PENGIRIMAN',
+            'description' => Auth::user()->name . ' mencetak Surat Jalan untuk Pengiriman: ' . $pengiriman->no_pengiriman,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return view('penjualan.surat_jalan_print', compact('pengiriman'));
     }
 
     // =========================================================================
@@ -417,6 +523,9 @@ class PenjualanController extends Controller
     public function edit($id)
     {
         $penjualan = Penjualan::with(['customer', 'details.barang'])->findOrFail($id);
+        if (strtolower(Auth::user()->role) === 'sales' && $penjualan->user_id != Auth::id()) {
+            return redirect()->route('penjualan.index')->with('error', 'Anda tidak berhak mengedit pesanan milik orang lain.');
+        }
         if ($penjualan->status !== 'draft') return redirect()->route('penjualan.index')->with('error', 'Tidak dapat diedit.');
         return view('penjualan.edit', compact('penjualan'));
     }
@@ -427,6 +536,9 @@ class PenjualanController extends Controller
         try {
             DB::beginTransaction();
             $penjualan = Penjualan::findOrFail($id);
+            if (strtolower(Auth::user()->role) === 'sales' && $penjualan->user_id != Auth::id()) {
+                throw new \Exception('Anda tidak berhak mengedit pesanan milik orang lain.');
+            }
             if ($penjualan->status !== 'draft') throw new \Exception('Pesanan sudah diproses.');
             $total_semua = 0;
             foreach ($request->detail_id as $index => $detailId) {
@@ -460,20 +572,25 @@ class PenjualanController extends Controller
     {
         $penjualan = Penjualan::findOrFail($id);
         
+        if (strtolower(Auth::user()->role) === 'sales' && $penjualan->user_id !== Auth::id()) {
+            return back()->with('error', 'Anda tidak berhak membatalkan pesanan milik orang lain.');
+        }
+
         if ($penjualan->status_approval !== 'pending') {
-            return back()->with('error', 'Tidak dapat menghapus Sales Order yang sudah disetujui atau ditolak.');
+            return back()->with('error', 'Tidak dapat membatalkan Sales Order yang sudah disetujui atau ditolak.');
         }
         
-        $no_so_terhapus = $penjualan->no_so;
-        $penjualan->delete();
+        $penjualan->status_approval = 'dibatalkan';
+        $penjualan->status = 'batal';
+        $penjualan->save();
 
         ActivityLog::create([
             'user_id' => Auth::id(),
-            'action' => 'HAPUS SO',
-            'description' => Auth::user()->name . ' menghapus permanen draf Sales Order: ' . $no_so_terhapus,
+            'action' => 'BATAL SO',
+            'description' => Auth::user()->name . ' membatalkan draf Sales Order: ' . $penjualan->no_so,
             'ip_address' => request()->ip(),
         ]);
 
-        return back()->with('success', 'Data berhasil dihapus.');
+        return back()->with('success', 'Sales Order berhasil dibatalkan.');
     }
 }

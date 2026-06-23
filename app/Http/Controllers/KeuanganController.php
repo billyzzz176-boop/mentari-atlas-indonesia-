@@ -75,7 +75,8 @@ class KeuanganController extends Controller
         try {
             DB::beginTransaction();
 
-            $piutang = Piutang::findOrFail($id);
+            // Gunakan lockForUpdate() agar jika ada 2 staf akunting yang menekan bayar di mili-detik yang sama, salah satunya akan menunggu antrean eksekusi.
+            $piutang = Piutang::lockForUpdate()->findOrFail($id);
             $sisa_tagihan = $piutang->total_tagihan - $piutang->total_dibayar;
             $bayar = $request->jumlah_bayar;
 
@@ -195,7 +196,8 @@ class KeuanganController extends Controller
         try {
             DB::beginTransaction();
 
-            $utang = Utang::findOrFail($id);
+            // Gunakan lockForUpdate() untuk pencegahan race condition
+            $utang = Utang::lockForUpdate()->findOrFail($id);
             $sisa_utang = $utang->total_utang - $utang->potongan_dn - $utang->total_dibayar;
             $bayar = $request->jumlah_bayar;
 
@@ -287,7 +289,7 @@ class KeuanganController extends Controller
 
             if ($request->tipe == 'penjualan') {
 
-                $piutang = Piutang::where('penjualan_id', $request->referensi_id)->first();
+                $piutang = Piutang::where('penjualan_id', $request->referensi_id)->lockForUpdate()->first();
                 
                 if (!$piutang) {
                     return back()->withErrors(['error' => 'Gagal! ID Penjualan (SO) bernilai ' . $request->referensi_id . ' tidak ditemukan dalam Buku Jurnal Piutang.']);
@@ -317,7 +319,7 @@ class KeuanganController extends Controller
                 ]);
 
             } else {
-                $utang = Utang::where('pembelian_id', $request->referensi_id)->first();
+                $utang = Utang::where('pembelian_id', $request->referensi_id)->lockForUpdate()->first();
                 
                 if (!$utang) {
                     return back()->withErrors(['error' => 'Gagal! ID Pembelian (PO) bernilai ' . $request->referensi_id . ' tidak ditemukan dalam Buku Jurnal Utang.']);

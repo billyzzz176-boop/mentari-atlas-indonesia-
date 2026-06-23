@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem ERP - Mentari Atlas Indonesia</title>
 
+    <!-- PWA & Favicon Meta Tags -->
+    <meta name="theme-color" content="#10b981">
+    <link rel="icon" type="image/png" href="{{ asset('mentari-icon-192.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('mentari-icon-192.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ asset('mentari-icon-192.png') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -22,18 +31,19 @@
     <style>
         :root {
             --bg-page: #f8fafc;
-            --bg-panel: #ffffff;
+            --bg-panel: rgba(255, 255, 255, 0.98);
             --border-panel: #e2e8f0;
             --text-primary: #0f172a;
             --text-secondary: #475569;
             --text-muted: #64748b;
             --accent: #10b981;
             --accent-hover: #059669;
-            --accent-soft: #d1fae5;
-            --accent-muted: #ecfdf5;
-            --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --radius: 12px;
+            --accent-soft: rgba(16, 185, 129, 0.15);
+            --accent-muted: rgba(16, 185, 129, 0.05);
+            --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            --radius: 16px;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         html, body {
@@ -41,71 +51,199 @@
             margin: 0;
             padding: 0;
             min-height: 100%;
-            background-color: #0f172a; /* Dark background to reveal behind main wrapper */
+            background-color: var(--bg-page);
             color: var(--text-primary);
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             scrollbar-width: thin;
             scrollbar-color: #cbd5e1 transparent;
+            -webkit-font-smoothing: antialiased;
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
 
-        /* Dark Theme Variables */
-        [data-theme="dark"] {
-            --bg-page: #0f172a;
-            --bg-panel: #1e293b;
-            --border-panel: #334155;
-            --text-primary: #f8fafc;
-            --text-secondary: #cbd5e1;
-            --text-muted: #94a3b8;
-            --accent: #34d399; /* Lighter emerald for dark mode */
-            --accent-soft: rgba(16, 185, 129, 0.2);
-            --accent-muted: rgba(16, 185, 129, 0.1);
+        /* Card Custom Pro Max */
+        .card-custom {
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-soft);
+            background: var(--bg-panel);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition-smooth);
+        }
+        .card-custom:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
         }
 
-        /* Base overrides for Dark Mode */
-        [data-theme="dark"] body { background-color: var(--bg-page) !important; color: var(--text-primary) !important; }
-        [data-theme="dark"] .bg-white { background-color: var(--bg-panel) !important; color: var(--text-primary) !important; border-color: var(--border-panel) !important; }
-        [data-theme="dark"] .bg-light { background-color: #0f172a !important; color: var(--text-secondary) !important; border-color: var(--border-panel) !important; }
-        [data-theme="dark"] .text-dark, [data-theme="dark"] .text-slate-dark, [data-theme="dark"] .text-muted, [data-theme="dark"] .text-slate-muted { color: var(--text-primary) !important; }
-        [data-theme="dark"] .border { border-color: var(--border-panel) !important; }
-        [data-theme="dark"] .card, [data-theme="dark"] .card-custom, [data-theme="dark"] .modal-content { background-color: var(--bg-panel) !important; border-color: var(--border-panel) !important; }
-        [data-theme="dark"] .card-header, [data-theme="dark"] .card-footer { background-color: var(--bg-page) !important; border-color: var(--border-panel) !important; }
-        [data-theme="dark"] .top-header, [data-theme="dark"] .sidebar:hover ~ .top-header { background: rgba(15, 23, 42, 0.85) !important; border-bottom: 1px solid var(--border-panel) !important; }
-        [data-theme="dark"] .table { color: var(--text-primary) !important; }
-        [data-theme="dark"] .table-wrapper-mentari { background-color: var(--bg-panel) !important; border-color: var(--border-panel) !important; }
-        [data-theme="dark"] .table-mentari thead th { background: #1e293b !important; color: #f8fafc !important; border-bottom: 2px solid #334155 !important; }
-        [data-theme="dark"] .table-mentari tbody tr { background-color: var(--bg-panel) !important; }
-        [data-theme="dark"] .table-mentari tbody td { background-color: transparent !important; color: var(--text-secondary) !important; border-color: var(--border-panel) !important; }
-        [data-theme="dark"] .table-mentari tbody tr:nth-child(even) td { background-color: rgba(255,255,255,0.02) !important; }
-        [data-theme="dark"] .table-mentari tbody tr:hover td { background-color: rgba(255,255,255,0.05) !important; }
-        [data-theme="dark"] th.sticky-action, [data-theme="dark"] td.sticky-action, [data-theme="dark"] .table-mentari th:last-child, [data-theme="dark"] .table-mentari td:last-child { background-color: var(--bg-panel) !important; }
-        [data-theme="dark"] [style*="background-color: #f8fafc"], [data-theme="dark"] [style*="background-color:#f8fafc"] { background-color: var(--bg-page) !important; }
-        [data-theme="dark"] .form-control, [data-theme="dark"] .form-select, [data-theme="dark"] .input-group-text { background-color: #0f172a !important; border-color: var(--border-panel) !important; color: var(--text-primary) !important; }
-        [data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus { background-color: #0f172a !important; color: var(--text-primary) !important; border-color: var(--accent) !important; }
-        [data-theme="dark"] .dropdown-menu { background-color: var(--bg-panel) !important; border-color: var(--border-panel) !important; }
-        [data-theme="dark"] .dropdown-item { color: var(--text-primary) !important; }
-        [data-theme="dark"] .dropdown-item:hover { background-color: var(--bg-page) !important; }
+        /* Buttons Pro Max */
+        .btn {
+            border-radius: 50rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            transition: var(--transition-smooth);
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        .btn-action-square {
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: var(--text-secondary);
+            transition: var(--transition-smooth);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .btn-action-square:hover {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.15);
+        }
 
-        /* Skeleton Loader Overlay */
+        /* Forms Pro Max */
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            padding: 0.6rem 1rem;
+            transition: var(--transition-smooth);
+            background-color: #f8fafc;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-soft);
+        }
+
+        /* Tables Pro Max (Mentari & Gacor merged) */
+        .table-mentari, .table-gacor {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        .table-mentari th, .table-gacor th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem;
+            border-top: none;
+        }
+        .table-mentari td, .table-gacor td {
+            vertical-align: middle;
+            color: #334155;
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.2s ease;
+        }
+        .table-mentari tbody tr, .table-gacor tbody tr {
+            transition: var(--transition-smooth);
+        }
+        .table-mentari tbody tr:hover, .table-gacor tbody tr:hover {
+            background-color: rgba(16, 185, 129, 0.02); /* Soft emerald hint */
+        }
+
+        /* Badge Soft & Gacor */
+        .badge-soft-success { background-color: var(--accent-soft); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .badge-soft-warning { background-color: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-soft-danger { background-color: rgba(239, 68, 68, 0.15); color: #b91c1c; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .badge-gacor { padding: 0.5em 0.8em; font-weight: 600; letter-spacing: 0.5px; border-radius: 50rem; }
+
+        /* Skeleton Loader Overlay with layout persistence */
         #skeleton-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: var(--bg-page); z-index: 99999;
-            display: flex; flex-direction: column; padding: 20px;
-            opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
-            pointer-events: none;
+            position: fixed;
+            top: 60px; /* Leave top-header visible */
+            left: 16px; /* Leave collapsed sidebar visible */
+            right: 0;
+            bottom: 0;
+            background: var(--bg-page, #f8fafc);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease-in-out;
         }
-        #skeleton-overlay.active { opacity: 1; visibility: visible; pointer-events: all; }
+
+        #skeleton-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+        }
+        
+        /* Push skeleton overlay when sidebar is hovered (expanded) */
+        @media (min-width: 992px) {
+            .sidebar:hover ~ .main-wrapper #skeleton-overlay {
+                left: 260px;
+            }
+        }
+        
+        @media (max-width: 991.98px) {
+            #skeleton-overlay {
+                left: 0 !important;
+                top: 60px;
+                bottom: 60px; /* Leave bottom navigation visible */
+            }
+        }
+        
+        /* GPU-Accelerated Shimmer Effect */
         .skeleton-box {
-            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-            background-size: 400% 100%;
-            animation: skeleton-loading 1.5s infinite;
-            border-radius: 8px; margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--border-panel, #e2e8f0);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            min-height: 20px;
         }
-        [data-theme="dark"] .skeleton-box { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 400% 100%; }
-        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
+        .skeleton-box::after {
+            content: "";
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.4) 20%,
+                rgba(255, 255, 255, 0.7) 60%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            animation: shimmer-effect 1.4s infinite ease-out;
+            will-change: transform;
+        }
+        
+        [data-theme="dark"] .skeleton-box {
+            background-color: #1e293b;
+        }
+        
+        [data-theme="dark"] .skeleton-box::after {
+            background: linear-gradient(
+                90deg,
+                rgba(30, 41, 59, 0) 0%,
+                rgba(255, 255, 255, 0.05) 20%,
+                rgba(255, 255, 255, 0.1) 60%,
+                rgba(30, 41, 59, 0) 100%
+            );
+        }
+
+        @keyframes shimmer-effect {
+            100% {
+                transform: translateX(100%);
+            }
+        }
         
         #top-loader {
             position: fixed; top: 0; left: 0; height: 3px;
@@ -130,10 +268,6 @@
         }
         .table tbody tr:hover {
             background-color: #f8fafc !important;
-            transform: scale(1.002) translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1);
-            position: relative;
-            z-index: 10;
         }
 
         /* 3. Button Click Ripple & Hover Scale */
@@ -161,8 +295,8 @@
             min-height: 100vh !important;
             background-color: #064e3b !important; /* Emerald-900 solid color for better performance */
             border-right: 1px solid rgba(4, 120, 87, 0.5) !important; /* Emerald-700 border */
-            z-index: 1050;
-            transition: width 0.3s ease, background-color 0.3s ease;
+            z-index: 1060;
+            transition: width 0.25s ease-in-out; /* Transisi halus untuk sidebar saja */
             border-radius: 0;
             overflow-x: hidden;
             overflow-y: hidden;
@@ -183,14 +317,14 @@
         .sidebar:not(:hover) .sidebar-menu {
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.1s, visibility 0.1s;
+            transition: opacity 0.15s ease-in-out;
         }
 
         .sidebar:hover .sidebar-brand,
         .sidebar:hover .sidebar-menu {
             opacity: 1;
             visibility: visible;
-            transition: opacity 0.3s 0.1s, visibility 0.3s 0.1s;
+            transition: opacity 0.2s ease-in-out 0.1s;
         }
 
         /* Sidebar Brand Area */
@@ -417,34 +551,35 @@
             display: flex; flex-direction: column; flex-grow: 1; min-width: 0; min-height: 100vh; 
             margin-left: 16px; 
             background-color: var(--bg-page);
-            transition: all 0.3s ease;
+            transition: none;
             transform-origin: right center;
         }
 
         .sidebar:hover ~ .main-wrapper {
-            margin-left: 260px;
-            /* Efek menyusut gemoy dihapus agar tidak ada gap hitam */
+            margin-left: 16px; /* Ditetapkan 16px agar konten web tidak geser/menyusut (overlay sidebar) */
         }
 
         /* Sidebar Mobile backdrop overlay */
         .sidebar-backdrop {
-            position: sticky;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             background-color: rgba(15, 23, 42, 0.5); /* Solid dark overlay */
-            z-index: 1045;
+            z-index: 1055;
             transition: opacity 0.3s ease;
         }
 
         @media (max-width: 991.98px) {
             .sidebar {
-                width: 0px;
+                width: 260px;
+                transform: translateX(-100%);
                 box-shadow: none;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             .sidebar.show-mobile-sidebar {
-                width: 260px;
+                transform: translateX(0);
                 box-shadow: 10px 0 25px rgba(0, 0, 0, 0.15);
                 overflow-y: auto;
             }
@@ -452,6 +587,12 @@
             .sidebar.show-mobile-sidebar .sidebar-link span,
             .sidebar.show-mobile-sidebar .dropdown-arrow {
                 opacity: 1 !important;
+                visibility: visible !important;
+            }
+            .sidebar:not(.show-mobile-sidebar) .brand-text,
+            .sidebar:not(.show-mobile-sidebar) .sidebar-link span,
+            .sidebar:not(.show-mobile-sidebar) .dropdown-arrow {
+                opacity: 1 !important; /* Di mobile, teks sidebar selalu siap karena width tetap 260px (off-canvas) */
                 visibility: visible !important;
             }
             .top-header { position: sticky; top: 0; height: 60px; background: #ffffff; border-bottom: 1px solid rgba(226, 232, 240, 0.6); z-index: 1040; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
@@ -571,7 +712,74 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
         }
-    </style>
+          /* FIX MOBILE SIDEBAR INVISIBLE MENU */
+      @media (max-width: 991.98px) {
+          .sidebar.show-mobile-sidebar .sidebar-brand,
+          .sidebar.show-mobile-sidebar .sidebar-menu {
+              opacity: 1 !important;
+              visibility: visible !important;
+          }
+      }
+
+        /* BOTTOM NAVIGATION - GLASSMORPHISM */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(226, 232, 240, 0.6);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        [data-theme="dark"] .bottom-nav {
+            background: rgba(30, 41, 59, 0.85);
+            border-top: 1px solid #334155;
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            width: 100%;
+            height: 100%;
+        }
+        .bottom-nav-item i {
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+            transition: transform 0.2s, color 0.2s;
+        }
+        .bottom-nav-item.active {
+            color: var(--accent);
+        }
+        .bottom-nav-item.active i {
+            transform: translateY(-2px);
+            color: var(--accent);
+            text-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        }
+        .bottom-nav-item:hover {
+            color: var(--accent);
+        }
+        
+        /* Give padding to body on mobile so content isn't hidden behind bottom nav */
+        @media (max-width: 991.98px) {
+            body {
+                padding-bottom: 70px;
+            }
+        }
+</style>
+
 </head>
 <body>
 
@@ -586,7 +794,8 @@
         $isSales = ($userRole == 'sales');
     @endphp
 
-    <div class="sidebar">
+    <div class="sidebar-backdrop d-none" id="sidebar-backdrop" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(15, 23, 42, 0.5); z-index: 1055;"></div>
+      <div class="sidebar {{ $isSales ? 'd-none d-lg-flex' : '' }}">
         <div class="sidebar-brand">
             <div class="brand-logo shadow-sm">
                 <i class="fas fa-layer-group text-success-custom fs-5"></i>
@@ -597,7 +806,7 @@
             </div>
         </div>
 
-        <div class="sidebar-backdrop d-none" id="sidebar-backdrop"></div>
+        
 
         
         
@@ -624,7 +833,7 @@
             </li>
 
             {{-- 1. Approval SO --}}
-            @if($isDirektur)
+            @if($isDirektur || in_array('approval_so', $hakAkses))
             <li class="sidebar-item">
                 <a class="sidebar-link hover-blue-main {{ request()->is('penjualan/approval*') ? 'active-link-blue-main' : '' }}" href="{{ route('penjualan.approval') }}">
                     <i class="fas fa-stamp" style="color: #60a5fa;"></i><span>Approval SO</span>
@@ -755,7 +964,7 @@
             {{-- 11. Unduh Laporan --}}
             @if(!$isSales && ($isDirektur || in_array('unduh_laporan', $hakAkses)))
             <li class="sidebar-item">
-                <a class="sidebar-link" href="#" data-bs-toggle="modal" data-bs-target="#modalUnduhLaporan">
+                <a class="sidebar-link" href="#" onclick="openUnduhLaporanModal(event)">
                     <i class="fas fa-file-export"></i><span>Unduh Laporan</span>
                 </a>
             </li>
@@ -784,10 +993,12 @@
     <div class="main-wrapper">
         <header class="top-header">
             <div class="d-flex align-items-center gap-2">
+                @if(strtolower(Auth::user()->role) != 'sales')
                 <!-- Hamburger button for mobile devices -->
                 <button class="btn btn-link text-slate-dark d-lg-none p-0 me-2 border-0" id="sidebar-toggle-btn" style="font-size: 1.25rem;">
                     <i class="fas fa-bars text-success-custom"></i>
                 </button>
+                @endif
                 
                 <!-- Breadcrumbs / Page Title (Desktop) -->
                 <nav aria-label="breadcrumb" class="d-none d-lg-block">
@@ -807,85 +1018,7 @@
             <div class="d-flex align-items-center gap-3">
 
                 @if(request()->is('dashboard'))
-                <!-- Notification Bell -->
-                <div class="dropdown" id="notificationDropdown">
-                    <a href="#" class="position-relative d-flex align-items-center justify-content-center bg-white rounded-circle shadow-sm" style="width: 38px; height: 38px; text-decoration: none;" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-bell" style="color: #10b981;"></i>
-                        <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size: 0.6rem;">
-                            0
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end mt-2 p-2 shadow-lg" style="min-width: 250px; border-radius: 12px;">
-                        <li><h6 class="dropdown-header fw-bold text-slate-dark">Notifikasi</h6></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a id="notif-item-approval" class="dropdown-item py-2 px-3 rounded-2 text-slate-dark d-flex align-items-center d-none" href="{{ route('penjualan.approval') }}" style="font-size: 0.85rem;">
-                                <div class="bg-warning-subtle text-warning rounded p-2 me-3"><i class="fas fa-clock"></i></div>
-                                <div>
-                                    <span class="fw-bold d-block">Approval SO</span>
-                                    <small class="text-muted"><span id="notif-count-approval">0</span> pesanan butuh persetujuan</small>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a id="notif-item-low-stock" class="dropdown-item py-2 px-3 rounded-2 text-slate-dark d-flex align-items-center d-none" href="{{ route('barang.index') }}" style="font-size: 0.85rem;">
-                                <div class="bg-warning-subtle text-warning rounded p-2 me-3"><i class="fas fa-exclamation-circle"></i></div>
-                                <div>
-                                    <span class="fw-bold d-block">Stok Menipis</span>
-                                    <small class="text-muted"><span id="notif-count-low-stock">0</span> barang akan habis</small>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a id="notif-item-out-of-stock" class="dropdown-item py-2 px-3 rounded-2 text-slate-dark d-flex align-items-center d-none" href="{{ route('barang.index') }}" style="font-size: 0.85rem;">
-                                <div class="bg-danger-subtle text-danger rounded p-2 me-3"><i class="fas fa-times-circle"></i></div>
-                                <div>
-                                    <span class="fw-bold d-block">Stok Kosong</span>
-                                    <small class="text-muted"><span id="notif-count-out-of-stock">0</span> barang sudah habis</small>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a id="notif-item-back-order" class="dropdown-item py-2 px-3 rounded-2 text-slate-dark d-flex align-items-center d-none" href="{{ route('backorder.index') }}" style="font-size: 0.85rem;">
-                                <div class="bg-info-subtle text-info rounded p-2 me-3"><i class="fas fa-box-open"></i></div>
-                                <div>
-                                    <span class="fw-bold d-block">Back Order</span>
-                                    <small class="text-muted"><span id="notif-count-back-order">0</span> pesanan tertahan (BO)</small>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a id="notif-item-piutang" class="dropdown-item py-2 px-3 rounded-2 text-slate-dark d-flex align-items-center d-none" href="{{ route('keuangan.piutang.index') }}" style="font-size: 0.85rem;">
-                                <div class="bg-danger-subtle text-danger rounded p-2 me-3"><i class="fas fa-exclamation-triangle"></i></div>
-                                <div>
-                                    <span class="fw-bold d-block">Piutang Overdue</span>
-                                    <small class="text-muted"><span id="notif-count-piutang">0</span> tagihan jatuh tempo</small>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a id="notif-item-utang" class="dropdown-item py-2 px-3 rounded-2 text-slate-dark d-flex align-items-center d-none" href="{{ route('keuangan.utang.index') }}" style="font-size: 0.85rem;">
-                                <div class="bg-secondary-subtle text-secondary rounded p-2 me-3"><i class="fas fa-hand-holding-usd"></i></div>
-                                <div>
-                                    <span class="fw-bold d-block">Utang Supplier Overdue</span>
-                                    <small class="text-muted"><span id="notif-count-utang">0</span> utang jatuh tempo</small>
-                                </div>
-                            </a>
-                        </li>
-                        <li>
-                            <a id="notif-item-retur" class="dropdown-item py-2 px-3 rounded-2 text-slate-dark d-flex align-items-center d-none" href="{{ route('retur.pembelian.index') }}" style="font-size: 0.85rem;">
-                                <div class="bg-primary-subtle text-primary rounded p-2 me-3"><i class="fas fa-exchange-alt"></i></div>
-                                <div>
-                                    <span class="fw-bold d-block">Retur Tertahan</span>
-                                    <small class="text-muted"><span id="notif-count-retur">0</span> retur menunggu selesai</small>
-                                </div>
-                            </a>
-                        </li>
-                        <li id="notif-empty" class="text-center p-3">
-                            <span class="text-muted small">Tidak ada notifikasi baru</span>
-                        </li>
-                    </ul>
-                </div>
+                <!-- Notification feature removed -->
                 @endif
 
                 <!-- User Profile -->
@@ -894,7 +1027,7 @@
                         <div class="text-white rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
                             <i class="fas fa-user fa-sm"></i>
                         </div> 
-                        <div class="d-flex flex-column align-items-start me-2 d-none d-sm-flex">
+                        <div class="d-flex flex-column align-items-start me-2">
                             <span class="fw-bolder text-slate-dark lh-1" style="font-size: 0.85rem; letter-spacing: -0.3px;">{{ Auth::user()->name }}</span>
                             <span class="text-emerald-custom fw-bold lh-1 mt-1 text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ str_replace('_', ' ', Auth::user()->role) }}</span>
                         </div>
@@ -927,17 +1060,25 @@
                 
         <!-- Skeleton Loader Overlay HTML -->
         <div id="skeleton-overlay">
-            <div class="d-flex mb-4 align-items-center">
-                <div class="skeleton-box" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 15px; margin-bottom: 0;"></div>
-                <div class="skeleton-box" style="width: 200px; height: 30px; margin-bottom: 0;"></div>
+            <div class="d-flex mb-4 align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="skeleton-box" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 15px; margin-bottom: 0;"></div>
+                    <div class="skeleton-box" style="width: 180px; height: 28px; margin-bottom: 0;"></div>
+                </div>
+                <div class="skeleton-box d-none d-md-block" style="width: 120px; height: 36px; border-radius: 20px; margin-bottom: 0;"></div>
             </div>
-            <div class="row mb-4">
-                <div class="col-md-3"><div class="skeleton-box" style="height: 100px;"></div></div>
-                <div class="col-md-3"><div class="skeleton-box" style="height: 100px;"></div></div>
-                <div class="col-md-3"><div class="skeleton-box" style="height: 100px;"></div></div>
-                <div class="col-md-3"><div class="skeleton-box" style="height: 100px;"></div></div>
+            <div class="row mb-3">
+                <div class="col-12 col-md-4">
+                    <div class="skeleton-box" style="height: 110px;"></div>
+                </div>
+                <div class="col-12 col-md-4 d-none d-md-block">
+                    <div class="skeleton-box" style="height: 110px;"></div>
+                </div>
+                <div class="col-12 col-md-4 d-none d-md-block">
+                    <div class="skeleton-box" style="height: 110px;"></div>
+                </div>
             </div>
-            <div class="skeleton-box" style="height: 300px; flex-grow: 1;"></div>
+            <div class="skeleton-box" style="flex-grow: 1; min-height: 200px;"></div>
         </div>
 
         @yield('content')
@@ -1033,6 +1174,17 @@
                 backdrop.addEventListener('click', function() {
                     sidebar.classList.remove('show-mobile-sidebar');
                     backdrop.classList.add('d-none');
+                });
+
+                // Auto close sidebar when ANY normal link is clicked (excluding dropdown toggles)
+                document.querySelectorAll('.sidebar-link:not(.has-dropdown), .sidebar-dropdown-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        // Don't close if it's just a hash link that doesn't trigger modal
+                        if(this.getAttribute('href') === '#' && !this.hasAttribute('data-bs-toggle')) return;
+                        
+                        sidebar.classList.remove('show-mobile-sidebar');
+                        backdrop.classList.add('d-none');
+                    });
                 });
             }
 
@@ -1276,6 +1428,25 @@
     </div>
 
     <script>
+        // Fungsi manual untuk buka modal Unduh Laporan (mencegah bentrok dengan Bootstrap toggle)
+        window.openUnduhLaporanModal = function(e) {
+            if(e) e.preventDefault();
+            // 1. Tutup sidebar secara paksa
+            var sidebar = document.querySelector('.sidebar');
+            var backdrop = document.getElementById('sidebar-backdrop');
+            if (sidebar) sidebar.classList.remove('show-mobile-sidebar');
+            if (backdrop) backdrop.classList.add('d-none');
+
+            // 2. Tampilkan modal setelah sidebar ditutup (berikan jeda sedikit)
+            setTimeout(function() {
+                var modalEl = document.getElementById('modalUnduhLaporan');
+                if (modalEl) {
+                    var modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                }
+            }, 150);
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             const modalKategori = document.getElementById('modal_kategori_laporan');
             const modalPeriode = document.getElementById('modal_periode');
@@ -1379,15 +1550,25 @@
         </div>
     </div>
     <style>
-        .fab-container {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 1050;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
+                  .fab-container {
+              position: fixed;
+              bottom: 2rem;
+              right: 2rem;
+              z-index: 1050;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+          }
+          @media (max-width: 991.98px) {
+              .fab-container {
+                  bottom: 5.5rem !important; /* Naik ke atas bottom nav */
+                  right: 1.5rem !important;
+              }
+              .btn-fab {
+                  width: 50px !important;
+                  height: 50px !important;
+              }
+          }
         .btn-fab {
             width: 60px;
             height: 60px;
@@ -1468,7 +1649,74 @@
         .btn-fab-laba:hover { transform: scale(1.1); color: white; }
 
         @media print { .fab-container { display: none !important; } }
-    </style>
+          /* FIX MOBILE SIDEBAR INVISIBLE MENU */
+      @media (max-width: 991.98px) {
+          .sidebar.show-mobile-sidebar .sidebar-brand,
+          .sidebar.show-mobile-sidebar .sidebar-menu {
+              opacity: 1 !important;
+              visibility: visible !important;
+          }
+      }
+
+        /* BOTTOM NAVIGATION - GLASSMORPHISM */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(226, 232, 240, 0.6);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        [data-theme="dark"] .bottom-nav {
+            background: rgba(30, 41, 59, 0.85);
+            border-top: 1px solid #334155;
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            width: 100%;
+            height: 100%;
+        }
+        .bottom-nav-item i {
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+            transition: transform 0.2s, color 0.2s;
+        }
+        .bottom-nav-item.active {
+            color: var(--accent);
+        }
+        .bottom-nav-item.active i {
+            transform: translateY(-2px);
+            color: var(--accent);
+            text-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        }
+        .bottom-nav-item:hover {
+            color: var(--accent);
+        }
+        
+        /* Give padding to body on mobile so content isn't hidden behind bottom nav */
+        @media (max-width: 991.98px) {
+            body {
+                padding-bottom: 70px;
+            }
+        }
+</style>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const fabContainer = document.getElementById('fabMenuContainer');
@@ -1534,21 +1782,79 @@
         localStorage.removeItem('theme');
         document.documentElement.removeAttribute('data-theme');
 
-        // SKELETON LOADER SCRIPT
+        // SKELETON LOADER SCRIPT & BOTTOM NAV FIX
+        let skeletonTimeout = null;
+
+        function triggerTransition(targetUrl) {
+            // Start top loader progress bar immediately
+            const topLoader = document.getElementById('top-loader');
+            if (topLoader) {
+                topLoader.style.width = '30%';
+                setTimeout(() => { topLoader.style.width = '70%'; }, 150);
+            }
+
+            // Clear any active timers
+            if (skeletonTimeout) clearTimeout(skeletonTimeout);
+
+            // Hide skeleton overlay completely. We will only rely on topLoader to give a sleek native app feel.
+            // skeletonTimeout = setTimeout(() => {
+            //     const overlay = document.getElementById('skeleton-overlay');
+            //     if (overlay) {
+            //         overlay.classList.add('active');
+            //     }
+            // }, 100);
+        }
+
         document.addEventListener('click', function(e) {
             const link = e.target.closest('a');
+            
+            // Check if it's a valid navigation link
             if (link && link.href && !link.href.includes('#') && !link.target && !link.hasAttribute('download')) {
-                // If the link points to the same page, do not trigger skeleton
-                if (link.href !== window.location.href) {
-                    document.getElementById('skeleton-overlay').classList.add('active');
+                // Ignore javascript: links or same page hashes
+                if (link.href.startsWith('javascript:') || link.href.includes('javascript:')) return;
+                
+                // If the link points to the exact same page, do not trigger skeleton
+                if (link.href.replace(/\/$/, '') === window.location.href.replace(/\/$/, '')) {
+                    return;
                 }
+
+                // Ignore clicks meant for a new tab (Ctrl/Cmd/Shift click or middle mouse button)
+                if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+
+                // Stop default browser navigation immediately to prevent DOM freezing
+                e.preventDefault();
+
+                // Close mobile sidebar immediately if open
+                const sidebar = document.querySelector('.sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                if (sidebar) sidebar.classList.remove('show-mobile-sidebar');
+                if (backdrop) backdrop.classList.add('d-none');
+                
+                // If bottom-nav-item, update active navigation state
+                if (link.classList.contains('bottom-nav-item')) {
+                    document.querySelectorAll('.bottom-nav-item').forEach(nav => nav.classList.remove('active'));
+                    link.classList.add('active');
+                }
+                
+                triggerTransition(link.href);
+
+                // Allow UI animations to render for 150ms before the browser main thread freezes for navigation
+                setTimeout(() => {
+                    window.location.href = link.href;
+                }, 150);
             }
         });
         
         // Hide skeleton overlay if user clicks back button in browser (pageshow event)
         window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                document.getElementById('skeleton-overlay').classList.remove('active');
+            if (skeletonTimeout) clearTimeout(skeletonTimeout);
+            const overlay = document.getElementById('skeleton-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+            const topLoader = document.getElementById('top-loader');
+            if (topLoader) {
+                topLoader.style.width = '0%';
             }
         });
 
@@ -1633,5 +1939,131 @@
     </script>
     @endif
 
+    {{-- BOTTOM NAVIGATION FOR MOBILE (ROLE-BASED & PERMISSION-BASED) --}}
+    @auth
+    <div class="bottom-nav d-lg-none shadow-lg">
+        @php
+            $roleLower = strtolower(Auth::user()->role);
+            $dashUrl = url('/dashboard');
+            if (in_array($roleLower, ['admin gudang', 'staf gudang'])) {
+                $dashUrl = route('warehouse.dashboard');
+            } elseif (in_array($roleLower, ['admin keuangan', 'staf keuangan', 'akunting'])) {
+                $dashUrl = route('keuangan.dashboard');
+            } elseif (in_array($roleLower, ['sales'])) {
+                $dashUrl = route('sales.dashboard');
+            }
+
+            // Ambil hak akses (array)
+            $hak = is_string(Auth::user()->hak_akses) ? json_decode(Auth::user()->hak_akses, true) ?? [] : (Auth::user()->hak_akses ?? []);
+            // Helper untuk mengecek apakah user diizinkan mengakses menu (Direktur otomatis bisa semua)
+            $canAccess = function($key) use ($hak, $roleLower) {
+                if (in_array($roleLower, ['direktur', 'superadmin', 'admin'])) return true;
+                return in_array($key, $hak);
+            };
+        @endphp
+
+        {{-- 1. TOMBOL HOME (Semua Role & Selalu Tampil) --}}
+        <a href="{{ $dashUrl }}" class="bottom-nav-item {{ request()->is('dashboard') || request()->is('sales/dashboard') || request()->is('keuangan/dashboard') || request()->is('warehouse/dashboard') ? 'active' : '' }}">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+
+        {{-- 2. SALES --}}
+        @if(in_array($roleLower, ['sales']))
+            <a href="{{ url('/penjualan/buat') }}" class="bottom-nav-item {{ request()->is('penjualan/buat') ? 'active' : '' }}">
+                <i class="fas fa-plus-circle"></i>
+                <span>Buat Order</span>
+            </a>
+            <a href="{{ url('/penjualan') }}" class="bottom-nav-item {{ request()->is('penjualan') && !request()->is('penjualan/buat') ? 'active' : '' }}">
+                <i class="fas fa-history"></i>
+                <span>Riwayat</span>
+            </a>
+        @endif
+
+        {{-- 3. GUDANG --}}
+        @if(in_array($roleLower, ['admin gudang', 'staf gudang', 'warehouse']))
+            @if($canAccess('backorder'))
+            <a href="{{ url('/backorder') }}" class="bottom-nav-item {{ request()->is('backorder*') ? 'active' : '' }}">
+                <i class="fas fa-hourglass-half"></i>
+                <span>Backorder</span>
+            </a>
+            @endif
+            @if($canAccess('pembelian_stok'))
+            <a href="{{ url('/pembelian') }}" class="bottom-nav-item {{ request()->is('pembelian*') ? 'active' : '' }}">
+                <i class="fas fa-shopping-bag"></i>
+                <span>PO</span>
+            </a>
+            @endif
+        @endif
+
+        {{-- 4. KEUANGAN --}}
+        @if(in_array($roleLower, ['admin keuangan', 'staf keuangan', 'akunting', 'keuangan']))
+            @if($canAccess('akses_keuangan'))
+            <a href="{{ url('/keuangan/piutang') }}" class="bottom-nav-item {{ request()->is('keuangan/piutang*') ? 'active' : '' }}">
+                <i class="fas fa-hand-holding-usd"></i>
+                <span>Piutang</span>
+            </a>
+            <a href="{{ url('/keuangan/utang') }}" class="bottom-nav-item {{ request()->is('keuangan/utang*') ? 'active' : '' }}">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Utang</span>
+            </a>
+            @endif
+        @endif
+
+        {{-- 5. MANAGER --}}
+        @if(in_array($roleLower, ['manager']))
+            @if($canAccess('approval_so'))
+            <a href="{{ url('/penjualan/approval') }}" class="bottom-nav-item {{ request()->is('penjualan/approval*') ? 'active' : '' }}">
+                <i class="fas fa-check-circle"></i>
+                <span>Approval</span>
+            </a>
+            @endif
+            @if($canAccess('unduh_laporan'))
+            <a href="#" class="bottom-nav-item" onclick="openUnduhLaporanModal(event)">
+                <i class="fas fa-file-alt"></i>
+                <span>Laporan</span>
+            </a>
+            @endif
+        @endif
+
+        {{-- 6. DIREKTUR --}}
+        @if(in_array($roleLower, ['direktur', 'super admin', 'admin']))
+            @if($canAccess('approval_so'))
+            <a href="{{ url('/penjualan/approval') }}" class="bottom-nav-item {{ request()->is('penjualan/approval*') ? 'active' : '' }}">
+                <i class="fas fa-check-circle"></i>
+                <span>Approval</span>
+            </a>
+            @endif
+            @if($canAccess('profit_laba'))
+            <a href="{{ url('/laporan/laba') }}" class="bottom-nav-item {{ request()->is('laporan/laba*') ? 'active' : '' }}">
+                <i class="fas fa-chart-line"></i>
+                <span>Profit/Laba</span>
+            </a>
+            @endif
+        @endif
+
+        {{-- 7. TOMBOL PROFIL (Semua Role & Selalu Tampil) --}}
+        <a href="#" class="bottom-nav-item" data-bs-toggle="modal" data-bs-target="#profileModal">
+            <i class="fas fa-user-circle"></i>
+            <span>Profil</span>
+        </a>
+    </div>
+    @endauth
+
+    @stack('scripts')
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
+
 </html>

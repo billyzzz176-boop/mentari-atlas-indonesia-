@@ -30,7 +30,7 @@ class Piutang extends Model
     // Relasi ke tabel Users (Admin/Direktur)
     public function PJ_Bayar()
     {
-        return $this->belongsTo(User::class, 'diinput_by');
+        return $this->belongsTo(User::class, 'diinput_by')->withTrashed();
     }
 
     // Relasi untuk menarik semua data riwayat cicilan
