@@ -81,23 +81,17 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-emerald-custom text-uppercase mb-2 tracking-wider">
-                                <i class="fas fa-cloud-upload-alt me-1"></i> Import Massal via File CSV
+                                <i class="fas fa-cloud-upload-alt me-1"></i> PUSAT MIGRASI DATA (BARANG, CUSTOMER, SUPPLIER)
                             </div>
-                            <form action="{{ route('barang.import') }}" method="POST" enctype="multipart/form-data" class="m-0">
-                                @csrf
-                                <div class="input-group input-group-sm mb-1" style="max-width: 600px;">
-                                    <input type="file" name="file_csv" class="form-control bg-light" accept=".csv" required style="border-top-left-radius: 999px; border-bottom-left-radius: 999px;">
-                                    <button type="submit" class="btn btn-emerald-custom px-4 fw-bold shadow-sm" style="border-top-right-radius: 999px; border-bottom-right-radius: 999px;">
-                                        <i class="fas fa-sync-alt me-1"></i> Sinkronisasi Data
-                                    </button>
-                                </div>
-                                <div class="form-text" style="font-size: 0.7rem; padding-left: 15px;">
-                                    <i class="fas fa-info-circle me-1 text-slate-muted"></i> Format Kolom: <strong>kode_barang, nama_barang, spesifikasi, merek, harga_beli, harga_jual, stok_bagus, stok_rusak</strong>
-                                </div>
-                            </form>
+                            <div class="mb-1" style="max-width: 600px;">
+                                <p class="text-muted small mb-2">Gunakan fitur Import Data tersentralisasi untuk memigrasikan data Master Anda secara massal dan aman menggunakan template Excel resmi.</p>
+                                <a href="{{ route('import.index') }}" class="btn btn-emerald-custom px-4 fw-bold shadow-sm rounded-pill">
+                                    <i class="fas fa-rocket me-1"></i> Buka Pusat Import Data
+                                </a>
+                            </div>
                         </div>
                         <div class="col-auto d-none d-lg-block ms-4">
-                            <i class="fas fa-file-csv fa-3x text-slate-muted opacity-25"></i>
+                            <i class="fas fa-database fa-3x text-emerald-custom opacity-25"></i>
                         </div>
                     </div>
                 </div>

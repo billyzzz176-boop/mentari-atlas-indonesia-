@@ -7,24 +7,24 @@
 
     <!-- PWA & Favicon Meta Tags -->
     <meta name="theme-color" content="#10b981">
-    <link rel="icon" type="image/png" href="{{ asset('mentari-icon-192.png') }}">
-    <link rel="shortcut icon" type="image/png" href="{{ asset('mentari-icon-192.png') }}">
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <link rel="apple-touch-icon" href="{{ asset('mentari-icon-192.png') }}">
+    <link rel="icon" type="image/png" href="http://localhost/mentari-icon-192.png">
+    <link rel="shortcut icon" type="image/png" href="http://localhost/mentari-icon-192.png">
+    <link rel="manifest" href="http://localhost/manifest.json">
+    <link rel="apple-touch-icon" href="http://localhost/mentari-icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    {{-- SweetAlert2 CSS --}}
+    
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
     
-    {{-- Select2 CSS & Bootstrap 5 Theme --}}
+    
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
-    {{-- jQuery & Select2 JS (Moved to head to avoid reference errors in views) --}}
+    
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
@@ -786,16 +786,9 @@
     <div id="top-loader"></div>
 
     <div class="d-flex flex-row w-100 min-vh-100">
-    @auth
-    @php
-        $userRole = strtolower(Auth::user()->role);
-        $hakAkses = Auth::user()->hak_akses ?? [];
-        $isDirektur = ($userRole == 'direktur' || $userRole == 'superadmin');
-        $isSales = ($userRole == 'sales');
-    @endphp
-
+        
     <div class="sidebar-backdrop d-none" id="sidebar-backdrop" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(15, 23, 42, 0.5); z-index: 1055;"></div>
-      <div class="sidebar {{ $isSales ? 'd-none d-lg-flex' : '' }}">
+      <div class="sidebar ">
         <div class="sidebar-brand d-flex align-items-center justify-content-center text-center">
             <div class="brand-text d-flex flex-column justify-content-center align-items-center w-100">
                 <span class="lh-1" style="font-size: 1.5rem;">Mentari<span class="text-success-custom">Atlas</span></span>
@@ -808,204 +801,151 @@
         
         
         <ul class="sidebar-menu">
-            {{-- Dashboard Utama --}}
+            
             <li class="sidebar-item">
-                @if(in_array($userRole, ['admin_warehouse', 'warehouse', 'admin warehouse']))
-                    <a class="sidebar-link {{ request()->is('warehouse/dashboard') ? 'active-link-custom' : '' }}" href="{{ route('warehouse.dashboard') }}">
-                        <i class="fas fa-chart-pie"></i><span>Ruang Gudang</span>
-                    </a>
-                @elseif(in_array($userRole, ['admin_keuangan', 'keuangan', 'admin keuangan']))
-                    <a class="sidebar-link {{ request()->is('keuangan/dashboard') ? 'active-link-custom' : '' }}" href="{{ route('keuangan.dashboard') }}">
-                        <i class="fas fa-chart-line"></i><span>Ruang Keuangan</span>
-                    </a>
-                @elseif(in_array($userRole, ['sales', 'marketing']))
-                    <a class="sidebar-link {{ request()->is('sales/dashboard') ? 'active-link-custom' : '' }}" href="{{ route('sales.dashboard') }}">
-                        <i class="fas fa-briefcase"></i><span>Ruang Sales</span>
-                    </a>
-                @else
-                    <a class="sidebar-link {{ request()->is('dashboard') ? 'active-link-custom' : '' }}" href="{{ url('/dashboard') }}">
+                                    <a class="sidebar-link active-link-custom" href="http://localhost/dashboard">
                         <i class="fas fa-th-large"></i><span>Dashboard Utama</span>
                     </a>
-                @endif
-            </li>
+                            </li>
 
-            {{-- 1. Approval SO --}}
-            @if($isDirektur || in_array('approval_so', $hakAkses))
-            <li class="sidebar-item">
-                <a class="sidebar-link hover-blue-main {{ request()->is('penjualan/approval*') ? 'active-link-blue-main' : '' }}" href="{{ route('penjualan.approval') }}">
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link hover-blue-main " href="http://localhost/penjualan/approval">
                     <i class="fas fa-stamp" style="color: #60a5fa;"></i><span>Approval SO</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 2. Buat Order (Only for Sales) --}}
-            @if($isSales)
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('penjualan/buat*') ? 'active-link-custom' : '' }}" href="{{ url('/penjualan/buat') }}">
-                    <i class="fas fa-plus-circle"></i><span>Buat Order</span>
-                </a>
-            </li>
-            @endif
-
-            {{-- 3. Riwayat SO --}}
-            @if($isDirektur || $isSales || in_array('riwayat_so', $hakAkses))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('penjualan') || (request()->is('penjualan/*') && !request()->is('penjualan/approval*') && !request()->is('penjualan/buat*') && !request()->is('penjualan/edit*')) ? 'active-link-custom' : '' }}" href="{{ route('penjualan.index') }}">
+            
+            
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/penjualan">
                     <i class="fas fa-file-invoice"></i><span>Riwayat SO</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 3. Data Barang --}}
-            @if(!$isSales && ($isDirektur || in_array('data_barang', $hakAkses)))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('barang*') ? 'active-link-custom' : '' }}" href="{{ url('/barang') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/barang">
                     <i class="fas fa-boxes"></i><span>Data Barang</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 4. Back Order --}}
-            @if(!$isSales && ($isDirektur || in_array('backorder', $hakAkses)))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->routeIs('backorder.*') ? 'active-link-custom' : '' }}" href="{{ route('backorder.index') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/backorder">
                     <i class="fas fa-hourglass-half"></i><span>Back Order</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 5. Pembelian Stok --}}
-            @if(!$isSales && ($isDirektur || in_array('pembelian_stok', $hakAkses)))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('pembelian*') ? 'active-link-custom' : '' }}" href="{{ url('/pembelian') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/pembelian">
                     <i class="fas fa-shopping-bag"></i><span>Pembelian Stok</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 6. Return Barang (Dropdown) --}}
-            @if(!$isSales && ($isDirektur || in_array('return_barang', $hakAkses)))
-            @php $isReturActive = request()->is('*retur*'); @endphp
-            <li class="sidebar-item {{ $isReturActive ? 'expanded' : '' }}">
-                <a href="#" class="sidebar-link has-dropdown {{ $isReturActive ? 'active-link-custom' : '' }}">
+            
+            
+                                    <li class="sidebar-item ">
+                <a href="#" class="sidebar-link has-dropdown ">
                     <i class="fas fa-arrow-rotate-left"></i>
                     <span>Return Barang</span>
-                    <i class="fas fa-chevron-down ms-auto dropdown-arrow transition-all" style="font-size: 0.7rem; {{ $isReturActive ? 'transform: rotate(180deg);' : '' }}"></i>
+                    <i class="fas fa-chevron-down ms-auto dropdown-arrow transition-all" style="font-size: 0.7rem; "></i>
                 </a>
                 <ul class="sidebar-dropdown-menu">
                     <li>
-                        <a class="sidebar-dropdown-link hover-blue {{ request()->routeIs('retur.penjualan.index') ? 'active-link-blue' : '' }}" href="{{ route('retur.penjualan.index') }}">
+                        <a class="sidebar-dropdown-link hover-blue " href="http://localhost/warehouse/retur-penjualan">
                             <i class="fas fa-undo text-info"></i><span>Return Penjualan</span>
                         </a>
                     </li>
                     <li>
-                        <a class="sidebar-dropdown-link hover-red {{ request()->routeIs('retur.pembelian.index') ? 'active-link-red' : '' }}" href="{{ route('retur.pembelian.index') }}">
+                        <a class="sidebar-dropdown-link hover-red " href="http://localhost/warehouse/retur-pembelian">
                             <i class="fas fa-truck-loading text-danger"></i><span>Return Pembelian</span>
                         </a>
                     </li>
                 </ul>
             </li>
-            @endif
-
-            {{-- 7. Keuangan (Dropdown) --}}
-            @if(!$isSales && ($isDirektur || in_array('akses_keuangan', $hakAkses)))
-            @php $isKeuanganActive = request()->is('*keuangan*'); @endphp
-            <li class="sidebar-item {{ $isKeuanganActive ? 'expanded' : '' }}">
-                <a href="#" class="sidebar-link has-dropdown {{ $isKeuanganActive ? 'active-link-custom' : '' }}">
+            
+            
+                                    <li class="sidebar-item ">
+                <a href="#" class="sidebar-link has-dropdown ">
                     <i class="fas fa-vault"></i>
                     <span>Keuangan</span>
-                    <i class="fas fa-chevron-down ms-auto dropdown-arrow transition-all" style="font-size: 0.7rem; {{ $isKeuanganActive ? 'transform: rotate(180deg);' : '' }}"></i>
+                    <i class="fas fa-chevron-down ms-auto dropdown-arrow transition-all" style="font-size: 0.7rem; "></i>
                 </a>
                 <ul class="sidebar-dropdown-menu">
                     <li>
-                        <a class="sidebar-dropdown-link hover-blue {{ request()->routeIs('keuangan.piutang.index') ? 'active-link-blue' : '' }}" href="{{ route('keuangan.piutang.index') }}">
+                        <a class="sidebar-dropdown-link hover-blue " href="http://localhost/keuangan/piutang">
                             <i class="fas fa-hand-holding-usd text-info"></i><span>Piutang Customer</span>
                         </a>
                     </li>
                     <li>
-                        <a class="sidebar-dropdown-link hover-red {{ request()->routeIs('keuangan.utang.index') ? 'active-link-red' : '' }}" href="{{ route('keuangan.utang.index') }}">
+                        <a class="sidebar-dropdown-link hover-red " href="http://localhost/keuangan/utang">
                             <i class="fas fa-file-invoice-dollar text-danger"></i><span>Utang Supplier</span>
                         </a>
                     </li>
                 </ul>
             </li>
-            @endif
-
-            {{-- 8. Data Customer --}}
-            @if(!$isSales && ($isDirektur || in_array('tingkat_cust', $hakAkses)))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('customer*') ? 'active-link-custom' : '' }}" href="{{ route('customer.index') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/customer">
                     <i class="fas fa-users-cog text-success-custom"></i><span>Data Customer</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 9. Data Supplier --}}
-            @if(!$isSales && ($isDirektur || in_array('data_supplier', $hakAkses)))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('supplier*') ? 'active-link-custom' : '' }}" href="{{ route('supplier.index') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/supplier">
                     <i class="fas fa-truck text-success-custom"></i><span>Data Supplier</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 10. Profit/Laba --}}
-            @if(!$isSales && ($isDirektur || in_array('profit_laba', $hakAkses)))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('laporan/laba*') ? 'active-link-custom' : '' }}" href="{{ route('laba.index') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/laporan/laba">
                     <i class="fas fa-chart-line"></i><span>Profit / Laba</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 11. Unduh Laporan --}}
-            @if(!$isSales && ($isDirektur || in_array('unduh_laporan', $hakAkses)))
-            <li class="sidebar-item">
+            
+            
+                        <li class="sidebar-item">
                 <a class="sidebar-link" href="#" onclick="openUnduhLaporanModal(event)">
                     <i class="fas fa-file-export"></i><span>Unduh Laporan</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 12. Audit Trail --}}
-            @if(!$isSales && ($isDirektur || in_array('audit_trail', $hakAkses)))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->routeIs('activity_logs.index') ? 'active-link-custom' : '' }}" href="{{ route('activity_logs.index') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/activity-logs">
                     <i class="fas fa-history"></i><span>Audit Trail</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 13. Akun Staf --}}
-            @if(!$isSales && ($isDirektur || in_array('akun_staf', $hakAkses)))
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('users*') ? 'active-link-custom' : '' }}" href="{{ url('/users') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/users">
                     <i class="fas fa-user-gear"></i><span>Akun Staf</span>
                 </a>
             </li>
-            @endif
-
-            {{-- 14. Import Data Massal --}}
-            @if(!$isSales && $isDirektur)
-            <li class="sidebar-item">
-                <a class="sidebar-link {{ request()->is('import-data*') ? 'active-link-custom' : '' }}" href="{{ route('import.index') }}">
+            
+            
+                        <li class="sidebar-item">
+                <a class="sidebar-link " href="http://localhost/import-data">
                     <i class="fas fa-cloud-upload-alt text-primary"></i><span>Import Data</span>
                 </a>
             </li>
-            @endif
-        </ul>
+                    </ul>
     </div>
 
     <div class="main-wrapper">
         <header class="top-header">
             <div class="d-flex align-items-center gap-2">
-                @if(strtolower(Auth::user()->role) != 'sales')
-                <!-- Hamburger button for mobile devices -->
+                                <!-- Hamburger button for mobile devices -->
                 <button class="btn btn-link text-slate-dark d-lg-none p-0 me-2 border-0" id="sidebar-toggle-btn" style="font-size: 1.25rem;">
                     <i class="fas fa-bars text-success-custom"></i>
                 </button>
-                @endif
-                
+                                
                 <!-- Breadcrumbs / Page Title (Desktop) -->
                 <nav aria-label="breadcrumb" class="d-none d-lg-block">
                     <ol class="breadcrumb mb-0 align-items-center" id="header-breadcrumb">
@@ -1023,10 +963,8 @@
             
             <div class="d-flex align-items-center gap-3">
 
-                @if(request()->is('dashboard'))
-                <!-- Notification feature removed -->
-                @endif
-
+                                <!-- Notification feature removed -->
+                
                 <!-- User Profile -->
                 <div class="dropdown">
                     <a class="d-flex align-items-center text-decoration-none bg-light rounded-pill px-2 py-1 shadow-sm border profile-btn-modern" href="#" role="button" data-bs-toggle="dropdown" style="transition: all 0.2s;">
@@ -1034,8 +972,8 @@
                             <i class="fas fa-user fa-sm"></i>
                         </div> 
                         <div class="d-flex flex-column align-items-start me-2">
-                            <span class="fw-bolder text-slate-dark lh-1" style="font-size: 0.85rem; letter-spacing: -0.3px;">{{ Auth::user()->name }}</span>
-                            <span class="text-emerald-custom fw-bold lh-1 mt-1 text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ str_replace('_', ' ', Auth::user()->role) }}</span>
+                            <span class="fw-bolder text-slate-dark lh-1" style="font-size: 0.85rem; letter-spacing: -0.3px;">Direktur Utama</span>
+                            <span class="text-emerald-custom fw-bold lh-1 mt-1 text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">direktur</span>
                         </div>
                         <i class="fas fa-chevron-down text-slate-muted ms-1 me-1" style="font-size: 0.7rem;"></i>
                     </a>
@@ -1048,9 +986,8 @@
                         </li>
                         <li><hr class="dropdown-divider border-light my-2"></li>
                         <li>
-                            <form action="{{ route('logout') }}" method="POST" class="m-0">
-                                @csrf
-                                <button type="submit" class="dropdown-item py-2 px-3 rounded-2 text-danger fw-bold d-flex align-items-center w-100 border-0 bg-transparent text-start" style="font-size: 0.85rem;">
+                            <form action="http://localhost/logout" method="POST" class="m-0">
+                                <input type="hidden" name="_token" value="n6jiDNf3h1hdRA1T5IiwfiypVY6AKI9YyGvUdg06" autocomplete="off">                                <button type="submit" class="dropdown-item py-2 px-3 rounded-2 text-danger fw-bold d-flex align-items-center w-100 border-0 bg-transparent text-start" style="font-size: 0.85rem;">
                                     <div class="bg-danger-subtle rounded d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 32px; height: 32px; min-width: 32px;"><i class="fas fa-power-off fa-fw text-danger"></i></div>
                                     <span>Keluar Aplikasi</span>
                                 </button>
@@ -1060,8 +997,7 @@
                 </div>
             </div>
         </header>
-    @endauth
-
+    
     <main class="container-fluid p-4" style="flex: 1;">
                 
         <!-- Skeleton Loader Overlay HTML -->
@@ -1087,13 +1023,198 @@
             <div class="skeleton-box" style="flex-grow: 1; min-height: 200px;"></div>
         </div>
 
-        @yield('content')
+        
+
+<style>
+    /* Mengikuti Tema Emerald Premium Mentari Atlas */
+    body { background-color: #f8fafc !important; }
+    .text-emerald-custom { color: #10b981 !important; }
+    .bg-emerald-custom { background-color: #10b981 !important; color: white; }
+    .text-slate-dark { color: #0f172a !important; }
+    .text-slate-muted { color: #64748b !important; }
+    
+    /* Premium Gradient Stat Cards */
+    .stat-card { border: none; border-radius: 1.25rem; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; height: 100%; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 1; color: white; }
+    .stat-card::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%); transform: rotate(30deg); z-index: -1; pointer-events: none; }
+    .stat-card:hover { transform: translateY(-8px) scale(1.02); }
+    .stat-card:hover .stat-icon-box { transform: scale(1.1) rotate(10deg); background-color: rgba(255,255,255,0.3) !important; color: white !important; }
+    
+    .stat-card-1 { background: linear-gradient(135deg, #10b981 0%, #047857 100%); box-shadow: 0 15px 25px -5px rgba(16, 185, 129, 0.4); }
+    .stat-card-2 { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); box-shadow: 0 15px 25px -5px rgba(245, 158, 11, 0.4); }
+    .stat-card-3 { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); box-shadow: 0 15px 25px -5px rgba(14, 165, 233, 0.4); }
+    .stat-card-4 { background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%); box-shadow: 0 15px 25px -5px rgba(244, 63, 94, 0.4); }
+
+    .stat-icon-box { width: 64px; height: 64px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); background-color: rgba(255, 255, 255, 0.2) !important; color: white !important; backdrop-filter: blur(4px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+    .stat-card p, .stat-card h2, .stat-card i { color: white !important; }
+    .chart-panel { background: white; border: none; border-radius: 1.25rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); padding: 1.5rem; }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-slate-dark fw-bold">Dashboard Eksekutif</h1>
+            <p class="text-slate-muted small mb-0 mt-1">Ringkasan performa bisnis dan pergerakan inventaris perusahaan.</p>
+        </div>
+        <div class="d-flex gap-2">
+            
+            
+            
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4 align-items-stretch">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-card-1 p-4">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                        <p class="small text-uppercase fw-bold mb-1 letter-spacing-wide opacity-75">Total Sales Order</p>
+                        <h2 class="fw-bolder mb-0" style="font-size: 1.6rem;">0</h2>
+                        <p class="small fw-bold mt-2 mb-0 opacity-75"><i class="fas fa-chart-line me-1"></i> Transaksi Tercatat</p>
+                    </div>
+                    <div class="stat-icon-box">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-card-2 p-4">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                        <p class="small text-uppercase fw-bold mb-1 letter-spacing-wide opacity-75">Menunggu Approval</p>
+                        <h2 class="fw-bolder mb-0" style="font-size: 1.6rem;">0</h2>
+                        <p class="small fw-bold mt-2 mb-0 opacity-75"><i class="fas fa-clock me-1"></i> Butuh Tindakan</p>
+                    </div>
+                    <div class="stat-icon-box">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-card-3 p-4">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                        <p class="small text-uppercase fw-bold mb-1 letter-spacing-wide opacity-75">Total Item Inventaris</p>
+                        <h2 class="fw-bolder mb-0" style="font-size: 1.6rem;">0</h2>
+                        <p class="small fw-bold mt-2 mb-0 opacity-75"><i class="fas fa-boxes me-1"></i> Master Data</p>
+                    </div>
+                    <div class="stat-icon-box">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card stat-card-4 p-4">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                        <p class="small text-uppercase fw-bold mb-1 letter-spacing-wide opacity-75">Peringatan Stok Kritis</p>
+                        <h2 class="fw-bolder mb-0" style="font-size: 1.6rem;">0</h2>
+                        <p class="small fw-bold mt-2 mb-0 opacity-75"><i class="fas fa-exclamation-triangle me-1"></i> Segera Restock</p>
+                    </div>
+                    <div class="stat-icon-box">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="chart-panel h-100">
+                <h6 class="fw-bold text-slate-dark mb-4">
+                    Tren Sales Order (6 Bulan Terakhir)
+                </h6>
+                <div id="salesChart" style="min-height: 300px;"></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-panel h-100">
+                <h6 class="fw-bold text-slate-dark mb-4">Distribusi Status Order</h6>
+                <div id="statusChart" style="min-height: 300px;" class="d-flex justify-content-center align-items-center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var salesOptions = {
+            series: [
+                { name: 'Omzet Penjualan (Rp)', type: 'area', data: [0,0,0,0,0,0] },
+                { name: 'Total Pesanan (SO)', type: 'line', data: [0,0,0,0,0,0] }
+            ],
+            chart: { height: 320, type: 'line', fontFamily: 'inherit', toolbar: { show: false }, zoom: { enabled: false } },
+            colors: ['#10b981', '#f59e0b'], 
+            fill: { 
+                type: ['gradient', 'solid'], 
+                gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 90, 100] } 
+            },
+            dataLabels: { enabled: false }, 
+            stroke: { curve: 'smooth', width: [3, 4] },
+            xaxis: { categories: ["Feb","Mar","Apr","May","Jun","Jul"], axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: [
+                {
+                    title: { text: "Omzet", style: { color: '#10b981', fontWeight: 'bold' } },
+                    labels: {
+                        formatter: function (val) {
+                            if (val >= 1000000000) return "Rp" + (val / 1000000000).toFixed(1) + "M";
+                            if (val >= 1000000) return "Rp" + (val / 1000000).toFixed(1) + "Jt";
+                            return "Rp" + val.toLocaleString('id-ID');
+                        },
+                        style: { colors: '#10b981', fontWeight: '600' }
+                    }
+                },
+                {
+                    opposite: true,
+                    title: { text: "Total SO", style: { color: '#f59e0b', fontWeight: 'bold' } },
+                    labels: {
+                        formatter: function (val) { return Math.round(val); },
+                        style: { colors: '#f59e0b', fontWeight: '600' }
+                    }
+                }
+            ],
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                    formatter: function (y, { seriesIndex }) {
+                        if (typeof y !== "undefined") {
+                            if (seriesIndex === 0) {
+                                return "Rp " + y.toLocaleString('id-ID');
+                            }
+                            return Math.round(y) + " Pesanan";
+                        }
+                        return y;
+                    }
+                }
+            },
+            grid: { borderColor: '#e2e8f0', strokeDashArray: 4 }
+        };
+        var salesChart = new ApexCharts(document.querySelector("#salesChart"), salesOptions);
+        salesChart.render();
+
+        var statusOptions = {
+            series: [0,0,0],
+            labels: ['Selesai', 'Menunggu Approval', 'Ditolak'],
+            chart: { type: 'donut', height: 320, fontFamily: 'inherit' },
+            colors: ['#10b981', '#f59e0b', '#ef4444'],
+            plotOptions: { pie: { donut: { size: '70%', labels: { show: true, name: { show: true }, value: { show: true, fontSize: '24px', fontWeight: 'bold', color: '#0f172a' }, total: { show: true, showAlways: true, label: 'Total SO', fontSize: '14px', color: '#64748b' } } } } },
+            dataLabels: { enabled: false }, stroke: { width: 0 }, legend: { position: 'bottom', markers: { radius: 12 } }
+        };
+        var statusChart = new ApexCharts(document.querySelector("#statusChart"), statusOptions);
+        statusChart.render();
+    });
+</script>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
 
-    {{-- Script Validasi & UI Lainnya --}}
+    
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Inisialisasi Global Select2 dengan Tema Bootstrap 5
@@ -1123,14 +1244,8 @@
                 }
             });
 
-            @if(session('success'))
-                Toast.fire({ icon: 'success', title: {!! json_encode(session('success')) !!} });
-            @endif
-
-            @if(session('error'))
-                Toast.fire({ icon: 'error', title: {!! json_encode(session('error')) !!} });
-            @endif
-        });
+            
+                    });
 
         document.addEventListener('click', function(e) {
             const deleteBtn = e.target.closest('.btn-delete');
@@ -1235,12 +1350,11 @@
                 });
             });
 
-            @if(request()->is('dashboard'))
-            // ==========================================
+                        // ==========================================
             // REAL-TIME NOTIFICATION POLLING
             // ==========================================
             function fetchNotifications() {
-                fetch('{{ route('api.notifications') }}')
+                fetch('http://localhost/api/notifications')
                     .then(response => response.json())
                     .then(data => {
                         const badge = document.getElementById('notif-badge');
@@ -1343,8 +1457,7 @@
             
             // Polling setiap 15 detik (15000 ms)
             setInterval(fetchNotifications, 15000);
-            @endif
-            
+                        
         });
     </script>
     </div>
@@ -1359,10 +1472,9 @@
                 </div>
                 
                 <div class="modal-body p-4 bg-light">
-                    <form action="{{ route('laporan.generate') }}" method="POST" target="_blank">
-                        @csrf
+                    <form action="http://localhost/pusat-laporan/generate" method="POST" target="_blank">
+                        <input type="hidden" name="_token" value="n6jiDNf3h1hdRA1T5IiwfiypVY6AKI9YyGvUdg06" autocomplete="off">                        
                         
-                        {{-- 1. KATEGORI --}}
                         <div class="mb-3">
                             <label class="form-label text-slate-dark fw-bold small text-uppercase mb-1" style="font-size: 0.7rem;">Kategori Laporan</label>
                             <select name="kategori_laporan" id="modal_kategori_laporan" class="form-select form-select-sm border-0 shadow-sm" required style="border-radius: 0.5rem; padding: 0.5rem;">
@@ -1379,7 +1491,7 @@
                             </select>
                         </div>
 
-                        {{-- 2. RENTANG WAKTU --}}
+                        
                         <div class="mb-3">
                             <label class="form-label text-slate-dark fw-bold small text-uppercase mb-1" style="font-size: 0.7rem;">Rentang Waktu</label>
                             <select name="periode" id="modal_periode" class="form-select form-select-sm border-0 shadow-sm mb-2" style="border-radius: 0.5rem; padding: 0.5rem;">
@@ -1399,7 +1511,7 @@
                             </div>
                         </div>
 
-                        {{-- 3. FILTER GROUPING --}}
+                        
                         <div class="mb-3 d-none" id="modal_grouping_section">
                             <label class="form-label text-slate-dark fw-bold small text-uppercase mb-1" style="font-size: 0.7rem;">Parameter Kelompok</label>
                             <div class="p-2 bg-white shadow-sm" id="modal_grouping_options" style="border-radius: 0.5rem; border: 1px dashed #cbd5e1;">
@@ -1407,7 +1519,7 @@
                             </div>
                         </div>
 
-                        {{-- 4. FORMAT --}}
+                        
                         <div class="mb-3">
                             <label class="form-label text-slate-dark fw-bold small text-uppercase mb-1" style="font-size: 0.7rem;">Format</label>
                             <div class="d-flex gap-3 bg-white p-2 shadow-sm" style="border-radius: 0.5rem;">
@@ -1529,27 +1641,26 @@
             toggleModalCustomDate();
         });
     </script>
-    @if(Auth::check() && Auth::user()->role === 'direktur')
-    <div class="fab-container" id="fabMenuContainer">
+        <div class="fab-container" id="fabMenuContainer">
         <button class="btn-fab btn-fab-main shadow-lg" id="fabMainBtn" title="Menu Cepat Direktur">
             <i class="fas fa-eye" id="fabMainIcon"></i>
         </button>
         <div class="fab-options" id="fabOptions">
             <div class="fab-item">
                 <span class="fab-label">Audit Trail</span>
-                <a href="{{ route('activity_logs.index') }}" class="btn-fab btn-fab-audit shadow-sm">
+                <a href="http://localhost/activity-logs" class="btn-fab btn-fab-audit shadow-sm">
                     <i class="fas fa-history"></i>
                 </a>
             </div>
             <div class="fab-item">
                 <span class="fab-label">Laba / Profit</span>
-                <a href="{{ route('laba.index') }}" class="btn-fab btn-fab-laba shadow-sm">
+                <a href="http://localhost/laporan/laba" class="btn-fab btn-fab-laba shadow-sm">
                     <i class="fas fa-chart-line"></i>
                 </a>
             </div>
             <div class="fab-item">
                 <span class="fab-label">Approval SO</span>
-                <a href="{{ route('penjualan.approval') }}" class="btn-fab btn-fab-approval shadow-sm">
+                <a href="http://localhost/penjualan/approval" class="btn-fab btn-fab-approval shadow-sm">
                     <i class="fas fa-clipboard-check"></i>
                 </a>
             </div>
@@ -1754,7 +1865,7 @@
         });
     </script>
     
-    {{-- SCRIPT: GACOR FLOATING TOAST NOTIFICATIONS --}}
+    
     <script>
         const Toast = Swal.mixin({
             toast: true,
@@ -1768,22 +1879,8 @@
             }
         });
 
-        @if(session('success'))
-            Toast.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: "{{ session('success') }}"
-            });
-        @endif
-
-        @if(session('error') || $errors->any())
-            Toast.fire({
-                icon: 'error',
-                title: 'Gagal!',
-                text: "{{ session('error') ?? $errors->first() }}"
-            });
-        @endif
         
+                
         // FORCE CLEAR DARK MODE (since user skipped it)
         localStorage.removeItem('theme');
         document.documentElement.removeAttribute('data-theme');
@@ -1865,8 +1962,7 @@
         });
 
     </script>
-    @endif
-    <!-- Modal Profil Saya -->
+        <!-- Modal Profil Saya -->
     <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow" style="border-radius: 1.25rem; overflow: hidden;">
@@ -1874,25 +1970,23 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4 text-center pt-0">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=10b981&color=fff&size=128&bold=true"
+                    <img src="https://ui-avatars.com/api/?name=Direktur+Utama&background=10b981&color=fff&size=128&bold=true"
                          class="rounded-circle shadow-sm mb-3" style="width: 90px; height: 90px; border: 4px solid #fff;" alt="Profile Picture">
                     
-                    <h5 class="fw-bolder text-slate-dark mb-1">{{ Auth::user()->name }}</h5>
+                    <h5 class="fw-bolder text-slate-dark mb-1">Direktur Utama</h5>
                     <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-3 py-2 rounded-pill text-uppercase mb-4">
-                        {{ str_replace('_', ' ', Auth::user()->role) }}
+                        direktur
                     </span>
 
-                    <form action="{{ route('profile.update') }}" method="POST" class="text-start mt-2">
-                        @csrf
-                        @method('PUT')
-                        
+                    <form action="http://localhost/profile" method="POST" class="text-start mt-2">
+                        <input type="hidden" name="_token" value="n6jiDNf3h1hdRA1T5IiwfiypVY6AKI9YyGvUdg06" autocomplete="off">                        <input type="hidden" name="_method" value="PUT">                        
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-slate-dark">Nama Lengkap</label>
-                            <input type="text" name="name" class="form-control" value="{{ Auth::user()->name }}" required style="border-radius: 0.5rem; background-color: #f8fafc;">
+                            <input type="text" name="name" class="form-control" value="Direktur Utama" required style="border-radius: 0.5rem; background-color: #f8fafc;">
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-slate-dark">Email Perusahaan</label>
-                            <input type="email" name="email" class="form-control" value="{{ Auth::user()->email }}" required style="border-radius: 0.5rem; background-color: #f8fafc;">
+                            <input type="email" name="email" class="form-control" value="direktur@gmail.com" required style="border-radius: 0.5rem; background-color: #f8fafc;">
                         </div>
 
                         <hr class="my-3 border-light">
@@ -1915,149 +2009,43 @@
         </div>
     </div>
     
-    @if(session('profile_updated'))
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            Swal.fire({
-                icon: 'success',
-                title: 'Profil Diperbarui!',
-                text: 'Perubahan akun Anda berhasil disimpan.',
-                confirmButtonColor: '#10b981'
-            });
-        });
-    </script>
-    @endif
-
-    @if($errors->profile->has('name') || $errors->profile->has('email') || $errors->profile->has('password'))
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var myModal = new bootstrap.Modal(document.getElementById('profileModal'), {
-                keyboard: false
-            });
-            myModal.show();
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal Menyimpan',
-                text: '{{ $errors->profile->first() }}',
-                confirmButtonColor: '#ef4444'
-            });
-        });
-    </script>
-    @endif
-
-    {{-- BOTTOM NAVIGATION FOR MOBILE (ROLE-BASED & PERMISSION-BASED) --}}
-    @auth
-    <div class="bottom-nav d-lg-none shadow-lg">
-        @php
-            $roleLower = strtolower(Auth::user()->role);
-            $dashUrl = url('/dashboard');
-            if (in_array($roleLower, ['admin gudang', 'staf gudang'])) {
-                $dashUrl = route('warehouse.dashboard');
-            } elseif (in_array($roleLower, ['admin keuangan', 'staf keuangan', 'akunting'])) {
-                $dashUrl = route('keuangan.dashboard');
-            } elseif (in_array($roleLower, ['sales'])) {
-                $dashUrl = route('sales.dashboard');
-            }
-
-            // Ambil hak akses (array)
-            $hak = is_string(Auth::user()->hak_akses) ? json_decode(Auth::user()->hak_akses, true) ?? [] : (Auth::user()->hak_akses ?? []);
-            // Helper untuk mengecek apakah user diizinkan mengakses menu (Direktur otomatis bisa semua)
-            $canAccess = function($key) use ($hak, $roleLower) {
-                if (in_array($roleLower, ['direktur', 'superadmin', 'admin'])) return true;
-                return in_array($key, $hak);
-            };
-        @endphp
-
-        {{-- 1. TOMBOL HOME (Semua Role & Selalu Tampil) --}}
-        <a href="{{ $dashUrl }}" class="bottom-nav-item {{ request()->is('dashboard') || request()->is('sales/dashboard') || request()->is('keuangan/dashboard') || request()->is('warehouse/dashboard') ? 'active' : '' }}">
+    
+    
+    
+        <div class="bottom-nav d-lg-none shadow-lg">
+        
+        
+        <a href="http://localhost/dashboard" class="bottom-nav-item active">
             <i class="fas fa-home"></i>
             <span>Home</span>
         </a>
 
-        {{-- 2. SALES --}}
-        @if(in_array($roleLower, ['sales']))
-            <a href="{{ url('/penjualan/buat') }}" class="bottom-nav-item {{ request()->is('penjualan/buat') ? 'active' : '' }}">
-                <i class="fas fa-plus-circle"></i>
-                <span>Buat Order</span>
-            </a>
-            <a href="{{ url('/penjualan') }}" class="bottom-nav-item {{ request()->is('penjualan') && !request()->is('penjualan/buat') ? 'active' : '' }}">
-                <i class="fas fa-history"></i>
-                <span>Riwayat</span>
-            </a>
-        @endif
-
-        {{-- 3. GUDANG --}}
-        @if(in_array($roleLower, ['admin gudang', 'staf gudang', 'warehouse']))
-            @if($canAccess('backorder'))
-            <a href="{{ url('/backorder') }}" class="bottom-nav-item {{ request()->is('backorder*') ? 'active' : '' }}">
-                <i class="fas fa-hourglass-half"></i>
-                <span>Backorder</span>
-            </a>
-            @endif
-            @if($canAccess('pembelian_stok'))
-            <a href="{{ url('/pembelian') }}" class="bottom-nav-item {{ request()->is('pembelian*') ? 'active' : '' }}">
-                <i class="fas fa-shopping-bag"></i>
-                <span>PO</span>
-            </a>
-            @endif
-        @endif
-
-        {{-- 4. KEUANGAN --}}
-        @if(in_array($roleLower, ['admin keuangan', 'staf keuangan', 'akunting', 'keuangan']))
-            @if($canAccess('akses_keuangan'))
-            <a href="{{ url('/keuangan/piutang') }}" class="bottom-nav-item {{ request()->is('keuangan/piutang*') ? 'active' : '' }}">
-                <i class="fas fa-hand-holding-usd"></i>
-                <span>Piutang</span>
-            </a>
-            <a href="{{ url('/keuangan/utang') }}" class="bottom-nav-item {{ request()->is('keuangan/utang*') ? 'active' : '' }}">
-                <i class="fas fa-file-invoice-dollar"></i>
-                <span>Utang</span>
-            </a>
-            @endif
-        @endif
-
-        {{-- 5. MANAGER --}}
-        @if(in_array($roleLower, ['manager']))
-            @if($canAccess('approval_so'))
-            <a href="{{ url('/penjualan/approval') }}" class="bottom-nav-item {{ request()->is('penjualan/approval*') ? 'active' : '' }}">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+                                <a href="http://localhost/penjualan/approval" class="bottom-nav-item ">
                 <i class="fas fa-check-circle"></i>
                 <span>Approval</span>
             </a>
-            @endif
-            @if($canAccess('unduh_laporan'))
-            <a href="#" class="bottom-nav-item" onclick="openUnduhLaporanModal(event)">
-                <i class="fas fa-file-alt"></i>
-                <span>Laporan</span>
-            </a>
-            @endif
-        @endif
-
-        {{-- 6. DIREKTUR --}}
-        @if(in_array($roleLower, ['direktur', 'super admin', 'admin']))
-            @if($canAccess('approval_so'))
-            <a href="{{ url('/penjualan/approval') }}" class="bottom-nav-item {{ request()->is('penjualan/approval*') ? 'active' : '' }}">
-                <i class="fas fa-check-circle"></i>
-                <span>Approval</span>
-            </a>
-            @endif
-            @if($canAccess('profit_laba'))
-            <a href="{{ url('/laporan/laba') }}" class="bottom-nav-item {{ request()->is('laporan/laba*') ? 'active' : '' }}">
+                                    <a href="http://localhost/laporan/laba" class="bottom-nav-item ">
                 <i class="fas fa-chart-line"></i>
                 <span>Profit/Laba</span>
             </a>
-            @endif
-        @endif
-
-        {{-- 7. TOMBOL PROFIL (Semua Role & Selalu Tampil) --}}
+                    
+        
         <a href="#" class="bottom-nav-item" data-bs-toggle="modal" data-bs-target="#profileModal">
             <i class="fas fa-user-circle"></i>
             <span>Profil</span>
         </a>
     </div>
-    @endauth
-
-    @stack('scripts')
-
+    
+    
     <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {

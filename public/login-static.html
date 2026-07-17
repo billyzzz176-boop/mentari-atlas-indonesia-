@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#064e3b"> {{-- Mengubah warna bar atas aplikasi --}}
+    <meta name="theme-color" content="#064e3b"> 
     <title>Login - Mentari Atlas Indonesia</title>
     
-    {{-- Pastikan ini mengarah ke file CSS/Bootstrap Anda --}}
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -14,7 +14,7 @@
         body { 
             background-color: #f1f5f9; 
             /* Tambahan Background Image */
-            background-image: url('{{ asset("images/bg-login.jpg") }}');
+            background-image: url('http://localhost/images/bg-login.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -140,7 +140,7 @@
 
     <div class="login-card row g-0">
         
-        {{-- PANEL KIRI: BRANDING & IDENTITAS --}}
+        
         <div class="col-lg-5 login-brand-panel d-none d-lg-flex">
             <div class="circle-decoration-1"></div>
             <div class="circle-decoration-2"></div>
@@ -165,7 +165,7 @@
             </div>
         </div>
 
-        {{-- PANEL KANAN: FORM LOGIN --}}
+        
         <div class="col-lg-7 p-4 p-md-5">
             <div class="px-md-4 py-md-3">
                 
@@ -181,52 +181,36 @@
                     <p class="text-slate-muted">Silakan masuk menggunakan akun korporat Anda.</p>
                 </div>
 
-                <form method="POST" action="{{ route('login') }}">
-                    @csrf
+                <form method="POST" action="http://localhost/login">
+                    <input type="hidden" name="_token" value="n6jiDNf3h1hdRA1T5IiwfiypVY6AKI9YyGvUdg06" autocomplete="off">                    
                     
-                    {{-- Input Email --}}
                     <div class="mb-4">
                         <div class="position-relative">
                             <i class="fas fa-envelope input-icon text-dark"></i>
-                            <input id="email" type="email" class="form-control form-control-custom w-100 @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="Alamat Email">
+                            <input id="email" type="email" class="form-control form-control-custom w-100 " name="email" value="" required autocomplete="email" autofocus placeholder="Alamat Email">
                         </div>
-                        @error('email')
-                            <span class="invalid-feedback d-block mt-1 fw-medium" role="alert" style="font-size: 0.8rem;">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                        @enderror
-                    </div>
+                                            </div>
 
-                    {{-- Input Password --}}
+                    
                     <div class="mb-4">
                         <div class="position-relative">
                             <i class="fas fa-lock input-icon text-dark"></i>
-                            <input id="password" type="password" class="form-control form-control-custom w-100 @error('password') is-invalid @enderror" name="password" required autocomplete="current-password" placeholder="Kata Sandi">
-                            <i class="fas fa-eye password-toggle-icon text-dark" id="togglePassword"></i> {{-- Eye icon for password toggle --}}
+                            <input id="password" type="password" class="form-control form-control-custom w-100 " name="password" required autocomplete="current-password" placeholder="Kata Sandi">
+                            <i class="fas fa-eye password-toggle-icon text-dark" id="togglePassword"></i> 
                         </div>
-                        @error('password')
-                            <span class="invalid-feedback d-block mt-1 fw-medium" role="alert" style="font-size: 0.8rem;">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                        @enderror
-                    </div>
+                                            </div>
 
-                    {{-- Remember Me & Lupa Password --}}
+                    
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                            <input class="form-check-input" type="checkbox" name="remember" id="remember" >
                             <label class="form-check-label text-slate-muted small" for="remember">
                                 Ingat Saya
                             </label>
                         </div>
-                        @if (Route::has('password.request'))
-                            <a class="text-emerald text-decoration-none small fw-bold" href="{{ route('password.request') }}">
-                                Lupa sandi?
-                            </a>
-                        @endif
-                    </div>
+                                            </div>
 
-                    {{-- Tombol Login --}}
+                    
                     <div class="d-grid mt-4">
                         <button type="submit" class="btn btn-emerald rounded-pill py-2 fs-6">
                             Masuk ke Sistem <i class="fas fa-arrow-right ms-2"></i>

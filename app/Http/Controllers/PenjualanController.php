@@ -68,7 +68,9 @@ class PenjualanController extends Controller
         $role = strtolower(Auth::user()->role);
         
         if (in_array($role, ['sales', 'marketing'])) {
-            $query->where('user_id', Auth::id());
+            $query->where(function ($q) {
+                $q->where('user_id', Auth::id());
+            });
         }
 
         if ($search) {
@@ -151,6 +153,7 @@ class PenjualanController extends Controller
                     'penjualan_id' => $penjualan->id,
                     'barang_id' => $barang->id,
                     'hpp' => $barang->harga_beli ?? 0, // <--- KUNCI HPP DIAMBIL DARI MASTER BARANG SAAT INI
+                    'harga_awal' => $barang->harga_jual ?? 0,
                     'harga_satuan' => $request->harga_satuan[$index],
                     'diskon' => $diskonItem,
                     'jumlah' => $request->jumlah[$index],

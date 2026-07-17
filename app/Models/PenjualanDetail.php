@@ -13,6 +13,7 @@ class PenjualanDetail extends Model
         'penjualan_id',
         'barang_id',
         'hpp', // <--- PONDASI LABA: HPP DIKUNCI DI SINI
+        'harga_awal',
         'harga_satuan',
         'diskon',
         'jumlah',

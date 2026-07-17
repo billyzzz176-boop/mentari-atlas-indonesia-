@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mentari-atlas-pwa-v2';
+const CACHE_NAME = 'mentari-atlas-pwa-v3';
 const STATIC_ASSETS = [
     '/manifest.json',
     '/mentari-icon-192.png',

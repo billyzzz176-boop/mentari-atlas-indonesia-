@@ -160,7 +160,12 @@
             let totalDN = 0;
             let selectedCount = 0;
 
-            const rows = document.querySelectorAll('.item-row');
+            // Check di Active Container
+            const isMobile = window.innerWidth < 992;
+            const activeContainer = isMobile ? document.getElementById('items-mobile-container') : document.getElementById('items-table-body');
+            if (!activeContainer) return;
+
+            const rows = activeContainer.querySelectorAll('.item-row');
             rows.forEach(row => {
                 const checkbox = row.querySelector('.item-checkbox');
                 if (checkbox && checkbox.checked) {
@@ -462,6 +467,14 @@
                 alert('Pilih setidaknya satu barang untuk diretur!');
                 e.preventDefault();
                 return false;
+            }
+
+            const desktopContainer = document.getElementById('items-table-body');
+            const mobileContainer = document.getElementById('items-mobile-container');
+            if (window.innerWidth < 992) {
+                if (desktopContainer) desktopContainer.querySelectorAll('input, select').forEach(i => i.removeAttribute('name'));
+            } else {
+                if (mobileContainer) mobileContainer.querySelectorAll('input, select').forEach(i => i.removeAttribute('name'));
             }
         });
     });

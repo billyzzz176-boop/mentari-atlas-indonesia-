@@ -209,7 +209,7 @@
     @foreach($users as $user)
     <div class="modal fade" id="modalEditUser{{ $user->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered text-start" style="white-space: normal;">
-            <form action="{{ url('/users/'.$user->id) }}" method="POST" class="modal-content border-0 shadow-lg rounded-4">
+            <form action="{{ url('/users/'.$user->id) }}" method="POST" class="modal-content border-0 shadow-lg rounded-4" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = '<i class=\'fas fa-spinner fa-spin me-1\'></i> Menyimpan...';">
                 @csrf @method('PUT')
                 <div class="modal-header bg-light border-bottom py-3">
                     <h6 class="modal-title fw-bold text-slate-dark"><i class="fas fa-user-edit me-2 text-emerald-custom"></i>Edit Akses: {{ $user->name }}</h6>
@@ -270,7 +270,7 @@
 {{-- MODAL TAMBAH USER --}}
 <div class="modal fade" id="modalTambahUser" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form action="{{ url('/users') }}" method="POST" class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <form action="{{ url('/users') }}" method="POST" class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = '<i class=\'fas fa-spinner fa-spin me-1\'></i> Mendaftarkan...';">
             @csrf
             <div class="modal-header bg-emerald-custom text-white border-bottom-0 py-3">
                 <h6 class="modal-title fw-bold"><i class="fas fa-user-plus me-2"></i>Registrasi Akun Baru</h6>

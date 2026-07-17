@@ -17,9 +17,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $data = Cache::remember('dashboard_index', 600, function () {
-            // 1. Total SO Keseluruhan
-            $totalSO = Penjualan::count();
+        // 1. Total SO Keseluruhan
+        $totalSO = Penjualan::count();
             
             // 2. Menunggu Approval (Pending)
             $menungguApproval = Penjualan::where('status_approval', 'pending')->count(); 
@@ -56,10 +55,9 @@ class DashboardController extends Controller
             // 4. Status Ditolak
             $statusDitolak = Penjualan::whereIn('status_approval', ['ditolak', 'batal'])->count();
             
-            $statusData = [$statusSelesai, $statusMenunggu, $statusDitolak];
+        $statusData = [$statusSelesai, $statusMenunggu, $statusDitolak];
 
-            return compact('totalSO', 'menungguApproval', 'totalBarang', 'stokKritis', 'salesBulan', 'salesData', 'omzetData', 'statusData');
-        });
+        $data = compact('totalSO', 'menungguApproval', 'totalBarang', 'stokKritis', 'salesBulan', 'salesData', 'omzetData', 'statusData');
 
         return view('dashboard', $data);
     }
@@ -68,16 +66,16 @@ class DashboardController extends Controller
     {
         $userId = Auth::id();
 
-        $data = Cache::remember('dashboard_sales_' . $userId, 600, function () use ($userId) {
+        $data = call_user_func(function () use ($userId) {
             // 1. Total SO Pribadi
-            $totalSO = Penjualan::where('user_id', $userId)->count();
+            $totalSO = Penjualan::where(function($q) use ($userId) { $q->where('user_id', $userId); })->count();
             
             // 2. SO Pending Pribadi
-            $menungguApproval = Penjualan::where('user_id', $userId)
+            $menungguApproval = Penjualan::where(function($q) use ($userId) { $q->where('user_id', $userId); })
                                          ->where('status_approval', 'pending')->count(); 
 
             // 3. Omzet Pribadi Bulan Ini
-            $omzetBulanIni = Penjualan::where('user_id', $userId)
+            $omzetBulanIni = Penjualan::where(function($q) use ($userId) { $q->where('user_id', $userId); })
                                       ->where('status_approval', 'disetujui')
                                       ->whereMonth('created_at', Carbon::now()->month)
                                       ->whereYear('created_at', Carbon::now()->year)
@@ -85,8 +83,8 @@ class DashboardController extends Controller
 
             // SO Terbaru dari Sales Ini
             $recentSO = Penjualan::with('customer')
-                                 ->where('user_id', $userId)
-                                 ->orderBy('created_at', 'asc')
+                                 ->where(function($q) use ($userId) { $q->where('user_id', $userId); })
+                                 ->orderBy('created_at', 'desc')
                                  ->take(5)
                                  ->get();
 
@@ -98,12 +96,12 @@ class DashboardController extends Controller
                 $bulan = Carbon::now()->subMonths($i);
                 $salesBulan[] = $bulan->translatedFormat('M'); 
                 
-                $countSO = Penjualan::where('user_id', $userId)
+                $countSO = Penjualan::where(function($q) use ($userId) { $q->where('user_id', $userId); })
                                     ->whereYear('created_at', $bulan->year)
                                     ->whereMonth('created_at', $bulan->month)
                                     ->count();
                 
-                $omzetSO = Penjualan::where('user_id', $userId)
+                $omzetSO = Penjualan::where(function($q) use ($userId) { $q->where('user_id', $userId); })
                                     ->whereYear('created_at', $bulan->year)
                                     ->whereMonth('created_at', $bulan->month)
                                     ->where('status_approval', 'disetujui')
@@ -113,8 +111,8 @@ class DashboardController extends Controller
                 $omzetData[] = (float) $omzetSO;
             }
 
-            $statusSelesai = Penjualan::where('user_id', $userId)->where('status_approval', 'disetujui')->count();
-            $statusDitolak = Penjualan::where('user_id', $userId)->whereIn('status_approval', ['ditolak', 'batal'])->count();
+            $statusSelesai = Penjualan::where(function($q) use ($userId) { $q->where('user_id', $userId); })->where('status_approval', 'disetujui')->count();
+            $statusDitolak = Penjualan::where(function($q) use ($userId) { $q->where('user_id', $userId); })->whereIn('status_approval', ['ditolak', 'batal'])->count();
             $statusData = [$statusSelesai, $menungguApproval, $statusDitolak];
 
             return compact('totalSO', 'menungguApproval', 'omzetBulanIni', 'recentSO', 'salesBulan', 'salesData', 'omzetData', 'statusData');
@@ -195,8 +193,7 @@ class DashboardController extends Controller
 
     public function keuanganIndex()
     {
-        $data = Cache::remember('dashboard_keuangan', 600, function () {
-            $totalOmzet = Piutang::sum('total_tagihan');
+        $totalOmzet = Piutang::sum('total_tagihan');
 
             $piutangBerjalan = Piutang::where('status_bayar', '!=', 'Lunas')->get()->sum(function($item) {
                 return $item->total_tagihan - $item->total_dibayar - $item->potongan;
@@ -209,11 +206,10 @@ class DashboardController extends Controller
                 });
             }
 
-            $soDisetujui = Penjualan::where('status_approval', 'disetujui')->count();
-            $riwayat = Piutang::with('penjualan.customer')->orderBy('updated_at', 'asc')->take(10)->get();
+        $soDisetujui = Penjualan::where('status_approval', 'disetujui')->count();
+        $riwayat = Piutang::with('penjualan.customer')->orderBy('updated_at', 'asc')->take(10)->get();
 
-            return compact('totalOmzet', 'piutangBerjalan', 'kewajibanUtang', 'soDisetujui', 'riwayat');
-        });
+        $data = compact('totalOmzet', 'piutangBerjalan', 'kewajibanUtang', 'soDisetujui', 'riwayat');
 
         return view('keuangan.dashboard', $data); 
     }

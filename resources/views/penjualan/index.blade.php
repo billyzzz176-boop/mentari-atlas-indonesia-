@@ -152,13 +152,15 @@
 
                         <td class="text-center">
                             @if($so->status == 'draft')
-                                <span class="badge bg-secondary px-2 py-1 shadow-sm"><i class="fas fa-box"></i> Packing</span>
+                                <span class="badge bg-secondary px-2 py-1 shadow-sm"><i class="fas fa-hourglass-half"></i> Tertunda</span>
                             @elseif($so->status == 'ready_to_invoice')
                                 <span class="badge bg-primary px-2 py-1 shadow-sm"><i class="fas fa-truck"></i> Kirim</span>
                             @elseif($so->status == 'menunggu_restock')
                                 <span class="badge bg-danger px-2 py-1 shadow-sm"><i class="fas fa-clock"></i> Back Order</span>
                             @elseif(in_array(strtolower($so->status), ['batal', 'dibatalkan']))
                                 <span class="badge bg-danger px-2 py-1 shadow-sm"><i class="fas fa-times-circle"></i> Dibatalkan</span>
+                            @elseif($so->status == 'diproses')
+                                <span class="badge bg-primary px-2 py-1 shadow-sm"><i class="fas fa-box"></i> Packing</span>
                             @else
                                 <span class="badge bg-info px-2 py-1 shadow-sm">{{ ucfirst(str_replace('_', ' ', $so->status ?: 'Kosong')) }}</span>
                             @endif

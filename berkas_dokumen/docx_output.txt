@@ -1,0 +1,516 @@
+Sistem Penunjang Keputusan Approval Sales Order Berbasis Web Menggunakan Metode SAW pada PT. Mentari Prima Semesta Kalbar
+Disusun Oleh:
+Tomas
+19231715
+Komala Diarti
+19231707
+Sabili Almuhtadi Billah
+19231671
+Muhammad Juhdi Patriadi
+19230126
+PROGRAM STUDI SISTEM INFORMASI
+FAKULTAS TEKNIK DAN INFORMATIKA
+UNIVERSITAS BINA SARANA INFORMATIKA
+2026
+Halaman Pengesahan
+KATA PENGANTAR
+DAFTAR ISI
+BAB I
+PENDAHULUAN
+I.1 Latar Belakang Proyek
+Kemajuan dalam bidang teknologi informasi mendorong perusahaan untuk meningkatkan efektivitas dan efisiensi dalam menjalankan bisnis. Salah satu proses penting bagi perusahaan adalah persetujuan pesanan penjualan (Approval sales order), karena proses ini menentukan apakah suatu permintaan penjualan dapat disetujui atau tidak sebelum menjalani langkah-langkah berikutnya. Proses approval yang tidak akurat dapat menimbulkan kerugian bagi perusahaan, seperti rendahnya margin keuntungan, ketersediaan stok barang, hingga risiko dengan pelanggan yang tidak valid.
+PT. Mentari Prima Semesta Kalbar adalah perusahaan distributor otomotif yang berfokus pada penyediaan suku cadang (sparepart) sepeda motor untuk wilayah Kalimantan Barat. Sebagai pemain kunci dalam rantai pasok lokal, perusahaan ini mengelola ribuan jenis komponen mulai dari suku cadang mesin, kelistrikan, hingga aksesori pendukung dari berbagai merek ternama. 
+Dalam kegiatan operasionalnya, di PT. Mentari Prima Semesta Kalbar, proses persetujuan sales order masih dilakukan secara manual dan bergantung pada pertimbangan pimpinan secara langsung. Kondisi ini menyebabkan proses pengambilan keputusan menjadi lebih lambat, kurang konsisten, serta berpotensi menimbulkan kesalahan dalam penilaian. Selain itu, pihak manajemen juga mengalami kesulitan dalam melakukan evaluasi pengajuan karena belum adanya sistem yang mampu memberikan rekomendasi keputusan secara otomatis dan terukur.
+Berdasarkan masalah tersebut, diperlukan suatu Sistem Penunjang Keputusan (SPK) yang berbasis web guna mempermudah proses penilaian kelayakan persetujuan order penjualan dengan cara yang lebih teratur dan objektif. Sistem ini menerapkan metode Simple Additive Weighting (SAW) dalam melakukan perhitungan yang didasarkan pada beberapa kriteria penilaian yang telah ditetapkan oleh perusahaan.
+I.2 Tujuan Proyek
+Proyek ini bertujuan untuk mengembangkan sistem pendukung keputusan berbasis web di PT. Mentari Prima Semesta Kalbar dengan menggunakan metode Simple Additive Weighting (SAW). Sistem ini dirancang untuk memudahkan perusahaan menilai kelayakan pengajuan penjualan secara cepat, objektif, dan terstruktur, sekaligus mengurangi risiko kesalahan akibat proses manual. Selain itu, sistem ini diharapkan dapat memperbaiki efisiensi proses persetujuan dan mendukung manajemen dalam pengambilan keputusan.
+I.3 Ruang Lingkup Proyek
+Proyek ini mencakup pembuatan sistem penunjang keputusan berbasis web yang mengelola proses persetujuan sales order di PT. Mentari Prima Semesta Kalbar. Sistem dirancang untuk tiga tipe pengguna: Admin, Sales, dan Direktur. Dalam pengambilan keputusan, sistem memakai metode Simple Additive Weighting (SAW) untuk menilai kelayakan berdasarkan kriteria: margin keuntungan (40%), ketersediaan stok (30%), kelengkapan data pelanggan (20%), dan riwayat penjualan (10%). Hasil perhitungan ini memberikan rekomendasi apakah sales order disetujui atau tidak. Pengembangan sistem ini hanya fokus pada proses persetujuan sales order dan tidak meliputi pembayaran maupun distribusi barang.
+I.4 Manfaat Proyek
+Manfaat dari proyek ini adalah mendukung perusahaan untuk melaksanakan proses approval sales order secara lebih efektif dan terstruktur. Sistem yang dikembangkan dapat mempermudah manajemen dalam mengambil keputusan berdasarkan data dan hasil perhitungan menggunakan metode SAW sehingga keputusan menjadi lebih objektif. Selain itu, sistem ini juga membantu mengurangi penggunaan dokumen manual, mempercepat proses verifikasi pengajuan sales order, serta meningkatkan akurasi dan konsistensi dalam proses approval.
+BAB II
+ANALISIS KEBUTUHAN
+II.1 Analisis kebutuhan fungsional dan non-fungsional
+Berdasarkan hasil analisis yang telah dilakukan sebelumnya, kebutuhan sistem kemudian dikelompokkan ke dalam dua kategori utama, yaitu kebutuhan fungsional dan nonfungsional, dengan tujuan untuk membedakan antara fitur yang harus disediakan oleh sistem dan standar kualitas yang perlu dipenuhi agar sistem dapat berjalan dengan baik. Kebutuhan fungsional mencakup berbagai fitur yang secara langsung digunakan oleh pengguna dalam menjalankan aktivitas di dalam sistem, seperti pengelolaan data sales order, data customer, dan data sales, fitur penilaian kelayakan berdasarkan kriteria tertentu seperti riwayat transaksi, jumlah pembelian, dan tingkat risiko pelanggan, serta fitur pengelolaan data yang memungkinkan admin atau manajemen mengatur dan memproses data secara mandiri.
+Sementara itu, kebutuhan nonfungsional berfokus pada aspek kualitas dan teknis sistem agar dapat digunakan secara optimal, meliputi konsistensi tampilan sistem, kemudahan dalam penggunaan oleh pengguna, keamanan data melalui sistem login dan hak akses, serta kinerja sistem yang cepat dan responsif sesuai dengan kebutuhan dalam proses approval sales order (Indriasari et al., 2026).
+Kebutuhan Fungsional
+Sistem dapat menyediakan fitur login dan logout untuk pengguna sesuai dengan hak akses yang dimiliki (admin, sales, dan direktur).
+Sistem dapat mengelola data customer, meliputi penambahan, perubahan, dan penampilan data customer.
+Sistem dapat mengelola data sales yang bertugas melakukan pengajuan sales order. 
+Sistem dapat mengelola data sales order (SO), termasuk proses input dan penyimpanan data yang diajukan oleh sales.
+Sistem dapat menampilkan daftar pengajuan sales order yang telah dibuat oleh sales.
+Sistem dapat melakukan penilaian terhadap sales order berdasarkan kriteria tertentu, seperti riwayat transaksi pelanggan, jumlah pembelian, dan tingkat risiko pelanggan
+Sistem dapat memberikan rekomendasi keputusan berdasarkan hasil penilaian, yaitu disetujui, dipertimbangkan, atau ditolak.
+Sistem dapat digunakan oleh pihak manajemen untuk melakukan approval atau penolakan sales order berdasarkan rekomendasi yang diberikan
+Sistem dapat menampilkan hasil keputusan approval pada setiap sales order.
+Sistem menyediakan fitur pencarian data untuk memudahkan pengguna dalam menemukan data sales order berdasarkan kriteria tertentu, seperti tanggal, nama customer, atau nama sales.
+Kebutuhan Non-Fungsional
+Usability (Kemudahan Penggunaan)
+Sistem harus memiliki tampilan yang sederhana, mudah dipahami, dan mudah digunakan oleh pengguna seperti sales maupun pihak manajemen.
+Performance (Kinerja Sistem)
+Sistem harus mampu memproses data dan menampilkan hasil penilaian serta rekomendasi keputusan dengan cepat tanpa mengalami keterlambatan yang signifikan.
+Security (Keamanan Sistem)
+Sistem harus memiliki mekanisme keamanan seperti login dengan username dan password serta pembagian hak akses pengguna agar data tidak dapat diakses oleh pihak yang tidak berwenang.
+Accessibility (Aksesibilitas)
+Sistem berbasis web sehingga dapat diakses melalui browser kapan saja dan dari perangkat yang terhubung dengan jaringan.
+Reliability (Keandalan Sistem)
+Sistem harus dapat berjalan dengan stabil dan meminimalkan terjadinya error saat digunakan dalam proses pengajuan maupun approval sales order.
+Maintainability (Kemudahan Pemeliharaan)
+Sistem harus mudah untuk diperbaiki dan dikembangkan di masa depan apabila terdapat penambahan fitur atau perbaikan
+Compatibility (Kesesuaian Sistem)
+Sistem dapat berjalan dengan baik di berbagai browser seperti Google Chrome, Mozilla Firefox, dan browser lainnya tanpa kendala.
+II. 2 Stakeholder yang terlibat
+Stakeholder merupakan pihak-pihak yang memiliki kepentingan atau terlibat secara langsung maupun tidak langsung dalam pengembangan dan penggunaan sistem. Adapun stakeholder dalam proyek ini adalah sebagai berikut:
+Manajemen (Direktur / Manager) 
+Pihak manajemen berperan sebagai pengambil keputusan dalam proses approval sales order. Mereka menggunakan sistem untuk melihat pengajuan yang masuk serta menentukan apakah suatu sales order disetujui, dipertimbangkan, atau ditolak berdasarkan rekomendasi dari sistem.
+Sales
+Sales merupakan pihak yang mengajukan sales order ke dalam sistem. Mereka bertugas memasukkan data pesanan pelanggan yang nantinya akan diproses dan diajukan untuk mendapatkan persetujuan dari manajemen.
+Admin
+Admin bertanggung jawab dalam mengelola sistem, seperti menginput dan memperbarui data customer, data sales, serta memastikan data yang digunakan dalam sistem tetap akurat dan terkelola dengan baik.
+Developer (Pengembang Sistem)
+Developer adalah pihak yang merancang, membangun, dan mengembangkan sistem SPK berbasis web. Developer juga bertugas melakukan perbaikan serta pengembangan sistem jika diperlukan di masa depan.
+II.3 Identifikasi masalah dan solusi yang diusulkan
+Berdasarkan hasil observasi yang telah dilakukan di PT Mentari Prima Semesta Kalbar, terdapat beberapa permasalahan dalam proses approval sales order yang masih dilakukan secara manual. Proses ini menyebabkan keterlambatan dalam pengambilan keputusan karena pihak manajemen harus memeriksa pengajuan satu per satu tanpa adanya sistem yang terintegrasi. Selain itu, tidak adanya sistem yang mendukung penilaian berbasis kriteria membuat keputusan yang diambil cenderung subjektif dan berpotensi menimbulkan ketidakkonsistenan. Kurangnya pemanfaatan teknologi juga menyulitkan pengelolaan data sales order, sehingga proses pencarian dan pengolahan data menjadi kurang efisien.
+Untuk mengatasi permasalahan tersebut, solusi yang diusulkan adalah dengan merancang dan membangun Sistem Penunjang Keputusan (SPK) untuk approval sales order berbasis web. Sistem ini akan membantu dalam mengelola data sales order secara terpusat serta menyediakan fitur penilaian berdasarkan kriteria tertentu seperti riwayat transaksi pelanggan, jumlah pembelian, dan tingkat risiko pelanggan. Dengan adanya sistem ini, pihak manajemen dapat memperoleh rekomendasi keputusan yang lebih objektif, sehingga proses approval menjadi lebih cepat, terstruktur, dan konsisten. Selain itu, sistem berbasis web juga memudahkan pengguna dalam mengakses dan mengelola data, sehingga dapat meningkatkan efisiensi operasional perusahaan.
+BAB III
+PEMBAHASAN PROYEK AKHIR
+III.1 Deskripsi proyek akhir
+Proyek akhir ini merupakan pengembangan Sistem Penunjang Keputusan (SPK) approval sales order berbasis web pada PT. Mentari Prima Semesta Kalbar. Sistem ini dirancang untuk membantu perusahaan dalam melakukan proses penilaian dan pengambilan keputusan terhadap pengajuan sales order secara lebih cepat, objektif, dan terstruktur. Dalam prosesnya, sistem memanfaatkan metode Simple Additive Weighting (SAW) sebagai metode perhitungan untuk menentukan kelayakan approval berdasarkan beberapa kriteria yang telah ditentukan perusahaan.
+Metode SAW dipilih karena mampu melakukan proses normalisasi dan pembobotan nilai secara sistematis sehingga hasil penilaian menjadi lebih terukur. Selain itu, metode ini memiliki proses perhitungan yang sederhana namun tetap mampu menghasilkan rekomendasi keputusan yang akurat. Penilaian dalam sistem dilakukan berdasarkan beberapa kriteria, seperti margin keuntungan, ketersediaan stok, kelengkapan data customer, dan track record sales. Berdasarkan uraian tersebut, proyek ini mengangkat judul “Sistem Penunjang Keputusan Approval Sales Order Berbasis Web Menggunakan Metode SAW pada PT Mentari Prima Semesta Kalbar”.
+III.2 Tujuan spesifik proyek
+Menghasilkan sistem approval sales order berbasis web.
+Mengimplementasikan metode SAW dalam proses penilaian.
+Memberikan rekomendasi keputusan approval secara otomatis.
+Membantu meningkatkan efisiensi proses bisnis perusahaan.
+III.3 Konteks bisnis atau organisasi yang relevan
+PT. Mentari Prima Semesta Kalbar merupakan perusahaan distributor otomotif yang berfokus pada penyediaan suku cadang (sparepart) sepeda motor untuk wilayah Kalimantan Barat. Perusahaan ini mengelola berbagai jenis komponen, mulai dari suku cadang mesin, kelistrikan, hingga aksesori pendukung dari berbagai merek ternama. Dalam proses bisnisnya, perusahaan memiliki aktivitas penjualan barang kepada pelanggan, di mana setiap pengajuan sales order harus melalui proses approval sebelum diproses lebih lanjut. Oleh karena itu, diperlukan sebuah sistem yang mampu membantu perusahaan dalam melakukan proses pengambilan keputusan approval secara lebih cepat, tepat, dan terstruktur agar proses bisnis dapat berjalan dengan lebih efektif dan efisien.
+BAB IV 
+MODEL SISTEM PENUNJANG KEPUTUSAN
+IV. 1 Metode SAW
+Metode Simple Additive Weighting (SAW) merupakan metode perhitungan yang digunakan untuk menentukan pilihan terbaik dari beberapa alternatif. Setiap alternatif akan dinilai berdasarkan sejumlah kriteria yang telah ditetapkan, di mana masing-masing kriteria memiliki bobot nilai tertentu (Safii & Ardhianto, 2024).
+IV.2 Perhitungan Manual
+Menentukan Bobot Kriteria
+Kode
+Kriteria
+Bobot
+C1
+Profit Margin
+40%
+C2
+Ketersediaan Stok
+30%
+C3
+Profil Risiko Customer
+20%
+C4
+Track Record Sales
+10%
+Total Bobot = 100%
+Data Pengajuan Sales Order
+Misalkan terdapat 3 pengajuan sales order yang akan dinilai.
+Alternatif A1
+Margin keuntungan = 25%
+Sisa stok = 35%
+Customer memiliki NPWP dan KTP
+Sales memiliki 8 approval sebelumnya
+Alternatif A2
+Margin keuntungan = 10%
+Sisa stok = 15%
+Customer hanya memiliki KTP
+Sales memiliki 3 approval sebelumnya
+Alternatif A3
+Margin keuntungan = 3%
+Sisa stok = 3%
+Data customer tidak lengkap
+Sales memiliki 2 approval sebelumnya
+Konversi ke Skor
+Alternatif
+C1
+C2
+C3
+C4
+A1
+100
+100
+100
+100
+A2
+60
+50
+50
+50
+A3
+20
+10
+50
+50
+Matrixs Keputusan
+Normalisasi
+Karna semua kriteria bersifat benefit, maka digunaka rumus:
+Keterangan: 
+rij = nilai normalisasi
+xij = nilai asli
+max(xij) = nilai terbesar dalam kolom
+Contoh Normalisasi C1:
+Alternatif
+Nilai
+C1
+100
+C2
+60
+C3
+20
+Cari nilai yang terbesar yaitu 100
+A1 = 100:100 =1
+A2 = 60:100 = 0,60
+A3 = 20:100 = 0,20
+Matrik normalisasi:
+Alternatif
+C1
+C2
+C3
+C4
+A1
+1.00
+1.00
+1.00
+1.00
+A2
+0.60
+0.50
+0.50
+0.50
+A3
+0.20
+0.10
+0.50
+0.50
+Menghitung Nilai Preferensi
+Rumus SAW:
+Nilai normalisasi dikalikan dengan bobot, lalu dijumlahkan.
+Alternatif A1
+Alternatif A2
+Alternatif A3
+Hasil Perangkingan
+Alternatif
+Nilai SAW
+Ranking
+Status
+A1
+1.00
+1
+Layak Disetujui
+A2
+0.54
+2
+Perlu Pertimbangan
+A3
+0.26
+3
+Tidak Layak Disetujui
+Berdasarkan hasil perhitungan metode SAW, pengajuan Sales Order A1 memperoleh nilai tertinggi, yaitu 1,00 sehingga menjadi alternatif yang paling layak untuk disetujui. Nilai tersebut diperoleh karena A1 memiliki margin keuntungan yang tinggi, ketersediaan stok yang mencukupi, kelengkapan data pelanggan yang baik, serta riwayat penjualan yang mendukung. Sementara itu, A3 mendapatkan nilai terendah karena memiliki margin keuntungan yang lebih rendah dan kondisi stok yang terbatas, sehingga kurang direkomendasikan untuk memperoleh persetujuan.
+BAB V
+PERANCANGAN SISTEM
+V.1 Desain Arsitektur Sistem
+Arsitektur Sistem Penunjang Keputusan Approval Sales Order dirancang menggunakan konsep client-server berbasis web yang dapat diakses melalui browser menggunakan jaringan internet maupun jaringan lokal perusahaan. Sistem ini digunakan oleh Admin, Sales, dan Direktur dengan hak akses yang berbeda sesuai kebutuhan operasional. Dalam prosesnya, pengguna mengakses sistem melalui browser yang terhubung ke web server, kemudian data diproses menggunakan framework Laravel dan disimpan ke dalam database MySQL. Sistem juga menerapkan metode Simple Additive Weighting (SAW) untuk menghitung dan menghasilkan rekomendasi keputusan approval sales order secara otomatis. Alur kerja dimulai saat Sales menginput pengajuan sales order, lalu sistem melakukan perhitungan berdasarkan kriteria. Setelah proses perhitungan selesai, hasil penilaian dan rekomendasi keputusan akan ditampilkan kepada Direktur untuk menentukan persetujuan atau penolakan terhadap pengajuan.
+V. 2 Diagram Sistem 
+Dalam perancangan Sistem ini digunakan beberapa diagram untuk menggambarkan alur, proses, dan hubungan antar bagian dalam sistem secara keseluruhan, yaitu sebagai berikut:
+Use Case Diagram
+Use Case Diagram digunakan untuk menggambarkan hubungan dan interaksi antara pengguna dengan Sistem Penunjang Keputusan Approval Sales Order. Pada sistem ini terdapat tiga aktor utama, yaitu Admin, Sales, dan Direktur.
+Gambar 1. Use Case Diagram
+Admin memiliki hak akses untuk melakukan login, melihat dashboard,
+melihat data sales order, mengelola akun, serta mengelola data customer.
+Sales memiliki hak akses untuk login, melihat dashboard, membuat pesanan, dan melihat status penjualan atau pengajuan sales order.
+Direktur memiliki hak akses untuk login, melihat dashboard, melihat data sales order, melihat rekomendasi SPK, serta melakukan proses approval sales order. Selain itu, sistem juga menyediakan fitur update dan logout yang dapat digunakan setelah pengguna berhasil masuk ke dalam sistem.
+Activity Diagram
+Activity Diagram digunakan untuk menggambarkan alur proses dalam sistem approval sales order. Proses dimulai ketika Sales mengakses menu buat order, kemudian menginput data pesanan ke dalam sistem. Setelah data berhasil disimpan, sistem secara otomatis memberikan status pending pada pengajuan. Selanjutnya, Direktur mengakses menu approval untuk meninjau daftar pengajuan yang masih berstatus pending. Setelah dilakukan peninjauan, Direktur dapat membuat keputusan approve atau reject. Jika pengajuan disetujui, sistem akan memperbarui status menjadi approved dan melakukan pengurangan stok secara otomatis. Namun, jika pengajuan ditolak, sistem akan mengubah status menjadi rejected. Setelah proses selesai, sistem akan memberikan notifikasi kepada Sales mengenai hasil pengajuan sales order.
+Gambar 2. Activity Diagram
+Entity Relationship Diagram (ERD)
+Entity Relationship Diagram (ERD) digunakan untuk menggambarkan hubungan antar-entitas atau tabel pada database. Pada sistem ini terdapat beberapa entitas utama, yaitu User, Customer, Penjualan, Barang, dan Penjualan detail.
+Gambar 3. ERD
+Entitas User digunakan untuk menyimpan data pengguna sistem seperti Admin, Sales, dan Direktur. Entitas Customer berisi data pelanggan yang melakukan pemesanan. Entitas Penjualan digunakan untuk menyimpan data sales order beserta status approval pengajuan. Selanjutnya, entitas Barang menyimpan data produk dan stok barang, sedangkan entitas Penjualan Detail digunakan untuk menyimpan rincian barang yang dipesan pada setiap transaksi penjualan. Hubungan antar-entitas tersebut digunakan untuk mendukung proses pengelolaan data sales order, proses approval, serta pengolahan data dalam sistem secara terintegrasi.
+Logical Record Structure (LRS)
+Logical Record Structure (LRS) digunakan untuk menggambarkan struktur tabel dan hubungan data pada database. Sistem ini memiliki beberapa tabel utama, yaitu User, Customer, Penjualan, Barang, dan Penjualan_detail.
+Gambar 4. LRS
+Tabel Customer digunakan untuk menyimpan data pelanggan. Tabel Penjualan berisi data sales order dan status approval. Tabel Barang digunakan untuk menyimpan data produk dan stok barang, sedangkan tabel Penjualan_detail menyimpan rincian barang pada setiap transaksi penjualan. Hubungan antartabel tersebut mendukung proses pengelolaan data dan proses approval sales order dalam sistem secara terintegrasi.
+V.3 Teknologi Yang Digunakan
+Teknologi yang digunakan dalam sistem ini terdiri dari beberapa komponen utama yang saling mendukung dalam proses pembangunan sistem yaitu: 
+Komponen
+Teknologi
+Bahasa pemograman
+PHP
+Framework
+Laravel
+Database
+MySQL
+Web server
+Apace/Xampp
+Browser
+Google Chrome
+Sistem Operasi
+Windows
+BAB VI
+PENGEMBANGAN SISTEM
+VI.1 Tahapan pengembangan aplikasi atau Sistem berbasis web dan/atau mobile (Fokus Pengembangan Sistem)
+Dalam pengembangan sistem ini digunakan metode Agile sebagai metode pengembangan sistem. Metode Agile merupakan pendekatan dalam pengembangan perangkat lunak yang mengutamakan kemudahan dalam menyesuaikan diri terhadap perubahan serta proses yang dilakukan secara bertahap. Pengembangannya dibagi ke dalam siklus kerja singkat yang disebut sprint, sehingga tim dapat dengan cepat menyesuaikan diri terhadap perubahan kebutuhan pengguna. Proses dimulai dari tahap perencanaan awal, yaitu mengidentifikasi kebutuhan bersama tim dan pemangku kepentingan, kemudian menyusun daftar kebutuhan atau fitur yang akan dikerjakan secara bertahap. Pada setiap sprint, tim mengembangkan fitur yang menjadi prioritas dengan pendekatan bertahap (inkremental), sehingga setiap siklus menghasilkan bagian sistem yang sudah dapat digunakan (Maulana, 2025).
+Metode ini dipilih karena mampu menyesuaikan perubahan kebutuhan sistem secara cepat dan dilakukan secara bertahap melalui proses iterasi. Tahapan pengembangan sistem yang dilakukan adalah sebagai berikut:
+Analisis Kebutuhan (Requirements Gathering)
+Pada fase awal ini, dilakukan diskusi dengan direktur untuk memetakan serta memprioritaskan kebutuhan penting proyek. Fokus utama adalah mengidentifikasi masalah pada alur manual dan menerjemahkannya ke dalam user stories. Teknik workshop juga digunakan untuk membangun komunikasi yang efektif, tujuannya memastikan seluruh tim memiliki pemahaman yang sama terhadap tujuan digitalisasi sistem.
+Perancangan Sistem (Design the Requirements)
+Tahap perancangan dilakukan untuk membuat gambaran sistem yang akan dikembangkan. Pada tahap ini dibuat desain antarmuka sistem, struktur database, use case diagram, activity diagram, dan ERD. Selain itu, ditentukan juga kriteria dan bobot yang digunakan dalam metode SAW, yaitu margin keuntungan sebesar 40%, ketersediaan stok 30%, kelengkapan data customer 20%, dan track record sales 10%.
+Pengkodean (coding)
+Tahap pengkodean dilakukan dengan menggunakan bahasa pemrograman PHP dan framework Laravel. Pada tahap ini seluruh fitur sistem mulai dibangun, seperti fitur login, pengelolaan data barang, pengajuan sales order, proses approval, serta fitur perhitungan SPK menggunakan metode SAW. Database MySQL digunakan sebagai media penyimpanan data sistem.
+Pengujian sistem (Testing)
+Proses pengujian dilakukan pada setiap akhir iterasi untuk memvalidasi kualitas dan stabilitas fungsi sistem.
+Penerapan (Deployment)
+Setelah sistem dinyatakan berjalan dengan baik, sistem mulai diterapkan pada lingkungan operasional perusahaan. Proses deployment dilakukan secara bertahap agar sistem dapat digunakan oleh Admin, Sales, dan Direktur dalam proses approval sales order. Selain itu, dilakukan monitoring terhadap performa sistem untuk memastikan proses perhitungan SPK dan pengolahan data berjalan dengan stabil saat digunakan dalam aktivitas perusahaan.
+Umpan Balik (feedback)
+Tahap terakhir dilakukan dengan mengumpulkan masukan dari pengguna dan pihak manajemen setelah sistem mulai digunakan. Masukan tersebut dimanfaatkan sebagai bahan evaluasi untuk memperbaiki fitur sistem, meningkatkan ketepatan perhitungan metode SAW, serta menyesuaikan kebutuhan baru yang muncul selama penggunaan sistem. Melalui proses evaluasi ini, sistem diharapkan dapat terus dikembangkan sehingga mampu menghasilkan keputusan approval yang lebih tepat dan efektif.
+VI.2 Kendala yang dihadapi dan solusinya
+Dalam proses pengembangan sistem ini, terdapat beberapa hambatan yang ditemui, baik dari aspek teknis maupun proses bisnis perusahaan. Meskipun demikian, setiap permasalahan yang muncul dapat ditangani dengan solusi yang tepat sehingga proses pengembangan sistem tetap berjalan dengan baik.
+Proses Approval masih manual
+Salah satu kendala utama yang dihadapi adalah proses approval sales order yang sebelumnya masih menggunakan dokumen fisik, sehingga proses persetujuan sering mengalami keterlambatan. Sebagai solusi, dikembangkan sistem berbasis web yang memungkinkan proses approval dilakukan secara digital dan dapat diakses kapan saja serta dari berbagai lokasi.
+Kesulitan mengelola data 
+Sebelumnya, data sales order, stok barang, dan data pelanggan masih disimpan secara terpisah sehingga proses pengecekan data menjadi kurang efisien. Sebagai solusi, seluruh data tersebut diintegrasikan ke dalam database MySQL agar pengelolaannya lebih teratur dan lebih mudah diakses.
+. Kurangnya Monitoring Status Pengajuan
+Perusahaan mengalami kendala dalam memantau status pengajuan sales order karena belum tersedia sistem monitoring yang terpusat. Untuk mengatasi hal tersebut, dikembangkan fitur monitoring approval secara real-time sehingga pengguna dapat melihat status pengajuan dengan lebih mudah dan cepat.
+Kendala Pengujian dan Penyesuaian Sistem
+Pada saat proses pengembangan, beberapa fitur mengalami error dan perlu penyesuaian terhadap kebutuhan pengguna. Solusi yang dilakukan adalah melakukan pengujian secara bertahap dan melakukan perbaikan sistem berdasarkan hasil evaluasi dan masukan pengguna
+BAB VII
+PENGUJIAN SISTEM
+VII.1 Metode pengujian (misalnya, black-box, white-box)
+Untuk memastikan sistem bekerja dengan baik, digunakan metode Black Box Testing sebagai teknik pengujian. Metode ini dilakukan dengan menguji setiap fitur melalui pemberian data masukan dan pemeriksaan hasil yang ditampilkan oleh sistem, tanpa memperhatikan proses pemrograman yang ada di belakangnya. Pengujian tersebut bertujuan untuk memastikan seluruh fungsi pada sistem dapat berjalan sesuai dengan yang diharapkan serta memenuhi kebutuhan pengguna.
+Pengujian dilakukan terhadap fitur-fitur utama yang terdapat pada sistem, meliputi proses login, pengelolaan data barang, pengajuan sales order, perhitungan metode SAW, proses approval, serta pemantauan status pengajuan. Setiap fitur diuji untuk memastikan sistem dapat menerima masukan dengan baik, mengolah data sesuai aturan bisnis yang berlaku, dan menghasilkan keluaran yang sesuai dengan kebutuhan pengguna.
+VII.2 Hasil pengujian dan Analisis
+Setelah dilakukan proses pengujian, diperoleh hasil bahwa fitur-fitur utama pada sistem telah berjalan sebagaimana mestinya dan sesuai dengan kebutuhan yang telah ditentukan. Hasil pengujian tersebut dapat dilihat pada uraian berikut:
+No
+Fitur yang Diuji
+Skenario Pengujian
+Hasil yang Diharapkan
+Hasil
+1
+Login
+Pengguna memasukkan email dan password yang valid
+Sistem berhasil masuk ke dashboard
+Berhasil
+2
+Input Sales Order
+Sales mengisi data customer dan barang
+Sales mengisi data customer dan barang
+Berhasil
+3
+Data Barang
+Admin menambah data barang baru
+Data barang tersimpan dan tampil pada sistem
+Berhasil
+4
+Perhitungan SAW
+Sistem melakukan perhitungan berdasarkan bobot dan kriteria
+Sistem menampilkan nilai dan rekomendasi approval
+Berhasil
+5
+Approval Sales Order
+Direktur melakukan approve atau reject pengajuan
+Status pengajuan berubah sesuai keputusan
+Berhasil
+6
+Monitoring Status
+Pengguna melihat status pengajuan sales order
+Sistem menampilkan status terbaru
+Berhasil
+7
+Logout
+Pengguna keluar dari sistem
+Sistem kembali ke halaman login
+Berhasil
+Tabel 2. Hasil Pengujian
+Analisis Hasil Pengujian
+Berdasarkan hasil pengujian yang telah dilakukan, seluruh fitur pada Sistem Penunjang Keputusan Approval Sales Order dapat berjalan dengan baik sesuai kebutuhan yang telah ditentukan. Sistem mampu mendukung proses input data, pengelolaan data barang, perhitungan menggunakan metode SAW, serta proses approval sales order secara efektif. Selain itu, hasil perhitungan metode SAW dapat dimanfaatkan sebagai rekomendasi dalam menilai kelayakan pengajuan sales order berdasarkan beberapa kriteria yang digunakan, yaitu margin keuntungan, kondisi ketersediaan stok, kelengkapan data pelanggan, dan riwayat penjualan.
+Selain itu, sistem dapat menampilkan status pengajuan secara langsung sehingga pengguna lebih mudah memantau perkembangan proses approval. Dengan demikian, sistem yang dikembangkan telah mampu mendukung proses pengambilan keputusan approval sales order agar lebih cepat, terukur, dan terorganisir.
+BAB VIII
+EVALUASI DAN DOKUMENTASI
+VIII.1 Evaluasi hasil proyek terhadap tujuan awal
+Berdasarkan hasil pengembangan dan pengujian yang telah dilakukan, Sistem Penunjang Keputusan Approval Sales Order berbasis web pada PT. Mentari Prima Semesta Kalbar berhasil mencapai tujuan yang telah ditetapkan. Sistem mampu membuat proses approval sales order yang sebelumnya dilakukan secara manual menjadi lebih terstruktur, terdokumentasi, dan mudah dikelola.
+Penerapan metode Simple Additive Weighting (SAW) pada sistem mampu menghasilkan rekomendasi keputusan berdasarkan kriteria yang telah ditetapkan, yaitu margin keuntungan, kondisi stok, kelengkapan data pelanggan, dan riwayat penjualan. Dengan metode ini, proses approval menjadi lebih terukur karena didasarkan pada hasil penilaian dan bobot yang jelas.
+Selain mampu mempercepat proses verifikasi sales order, sistem juga memudahkan pengguna dalam memantau status approval serta membantu mengurangi risiko kesalahan dalam pengambilan keputusan. Dengan adanya sistem ini, proses approval menjadi lebih efektif, efisien, dan terkelola dengan lebih baik.
+VIII.2 Dokumentasi teknis dan pengguna
+Dokumentasi sistem dibuat sebagai panduan bagi pengembang maupun pengguna dalam mengoperasikan dan melakukan pemeliharaan sistem. Dokumentasi yang disusun meliputi dokumentasi teknis dan dokumentasi pengguna.
+VIII.3 Rencana pengembangan lanjutan
+Walaupun sistem yang dikembangkan telah memenuhi kebutuhan utama perusahaan, masih terdapat beberapa aspek yang dapat dikembangkan lebih lanjut untuk meningkatkan kinerja dan kualitas sistem di masa mendatang.
+BELUM SELESAI, WEB NYA MASIH KAMI KEMBANGKAN 
+BAB IX
+Manajemen Tim
+Manajemen tim merupakan salah satu faktor penting dalam keberhasilan pengembangan Sistem Informasi Approval Sales Order Berbasis Web pada PT Mentari Prima Semesta Kalimantan Barat. Pengelolaan tim yang baik memungkinkan setiap anggota menjalankan tugas sesuai tanggung jawabnya, meningkatkan koordinasi selama proses pengembangan sistem, serta membantu pencapaian target proyek sesuai jadwal yang telah ditetapkan. Dalam proyek ini, tim terdiri dari empat anggota yang bekerja secara kolaboratif mulai dari tahap analisis kebutuhan, perancangan sistem, pengembangan aplikasi, hingga penyusunan laporan akhir.
+IX.1 Pembagian tugas antar anggota tim
+Pembagian tugas dilakukan berdasarkan kemampuan dan kompetensi masing-masing anggota tim. Tujuan pembagian tugas adalah untuk meningkatkan efektivitas kerja, menghindari tumpang tindih pekerjaan, serta memastikan seluruh kebutuhan proyek dapat diselesaikan dengan baik.
+STRUKTUR TIM PROYEK
+No
+Nama Anggota
+Jabatan
+Tanggung Jawab
+1
+Sabili Almuhtadi Billah
+Ketua/Programmer/
+Database Designer/Tester
+Pengembangan sistem berbasis Laravel, perancangan database, dan integrasi sistem,pengujian sistem
+2
+Tomas
+System Analyst/
+Programmer Support
+Analisis kebutuhan sistem, koordinasi tim, dan penyusunan laporan proyek, Membantu pengembangan sistem,
+3
+Komala Diarti
+UX/UI Designer/System Analyst
+Perancangan antarmuka pengguna, pengujian sistem dan perancangan UML
+4
+Muhammad Juhdy Patriadi
+Documentation
+Dokumentasi proyek.
+TUGAS DAN TANGGUNG JAWAB ANGGOTA
+Sabili Almuhtadi Billah – Ketua Tim / Programmer / Database Designer / Tester.
+Bertanggung jawab dalam mengelola jalannya proyek sekaligus mengembangkan sistem yang dibangun. Tugas yang dilakukan meliputi:
+Mengoordinasikan seluruh anggota tim.
+Menyusun jadwal pelaksanaan proyek.
+Merancang struktur database sistem.
+Membuat tabel dan relasi database MySQL.
+Mengembangkan sistem menggunakan framework Laravel.
+Mengimplementasikan fitur login, data barang, sales order, dan approval.
+Melakukan integrasi sistem dengan database.
+Melakukan pengujian sistem dan validasi fitur.
+Melakukan debugging serta perbaikan bug yang ditemukan selama pengembangan.
+Tomas – System Analyst / Programmer Support
+Bertanggung jawab atas analisis kebutuhan sistem dan membantu proses pengembangan aplikasi. Tugas yang dilakukan meliputi:
+Melakukan analisis kebutuhan sistem approval sales order.
+Mengidentifikasi kebutuhan fungsional dan nonfungsional. 
+Membuat diagram UML seperti Use Case Diagram, Activity Diagram, dan ERD. 
+Membantu implementasi fitur-fitur sistem. 
+Membantu proses pengujian dan validasi sistem. 
+Menyusun laporan proyek dan dokumentasi akademik. 
+Melakukan komunikasi dengan dosen pembimbing dan pihak perusahaan. 
+Komala Diarti – UI/UX Designer/System Analyst
+Bertanggung jawab terhadap desain tampilan sistem agar mudah digunakan oleh pengguna. Tugas yang dilakukan meliputi:
+Mendesain tampilan antarmuka pengguna.
+Membuat prototipe atau mockup sistem.
+Menyesuaikan desain dengan kebutuhan pengguna.
+Membuat desain halaman login, dashboard, data barang, sales order, dan approval.
+Memberikan masukan terkait kenyamanan dan kemudahan penggunaan sistem.
+Membuat diagram UML seperti Use Case Diagram, Activity Diagram, dan ERD. 
+Muhammad Juhdy Patriadi – Documentation
+Bertanggung jawab atas penyusunan dokumentasi proyek dan pendukung administrasi proyek. Tugas yang dilakukan meliputi:
+Menyusun dokumentasi pengembangan sistem.
+Menyusun panduan penggunaan sistem.
+Mendokumentasikan hasil pengujian sistem.
+Membantu penyusunan laporan proyek.
+Menyiapkan dokumen presentasi dan demonstrasi sistem.
+Mengelola penyimpanan dokumen proyek agar tersusun dengan baik.
+Kolaborasi Antar Anggota
+Meskipun setiap anggota memiliki tugas utama masing-masing, seluruh anggota tetap berpartisipasi dalam kegiatan berikut:
+1. Diskusi kebutuhan sistem.
+2. Pengambilan keputusan terkait pengembangan aplikasi.
+3. Pengujian fitur sistem.
+4. Penyusunan laporan akhir.
+5. Persiapan presentasi proyek.
+6. Evaluasi hasil pengembangan pada setiap sprint Agile.
+Dengan pembagian tugas yang jelas, setiap anggota dapat fokus pada tanggung jawabnya tanpa mengurangi koordinasi dan kerja sama tim secara keseluruhan.
+IX.2 Strategi manajemen proyek 
+Strategi manajemen proyek yang digunakan dalam pengembangan sistem ini adalah metode Agile. Agile merupakan pendekatan pengembangan perangkat lunak yang menekankan kolaborasi tim, fleksibilitas terhadap perubahan kebutuhan, serta pengembangan sistem secara bertahap (iteratif).
+Metode Agile dipilih karena sesuai dengan karakteristik proyek yang membutuhkan pengembangan fitur secara bertahap dan memungkinkan adanya perubahan kebutuhan selama proses pengembangan.
+Alasan Penggunaan Agile
+Metode Agile dipilih karena memiliki beberapa keunggulan, yaitu:
+Memungkinkan pengembangan sistem dilakukan secara bertahap.
+Meningkatkan komunikasi dan koordinasi antaranggota tim.
+Mempermudah proses evaluasi dan perbaikan sistem.
+Fleksibel terhadap perubahan kebutuhan pengguna.
+Meminimalkan risiko kesalahan pada tahap akhir pengembangan.
+Tahapan Pengembangan Agile
+Pengembangan Sistem Penunjang Keputusan Approval Sales Order pada proyek ini menggunakan metode Agile sebagaimana telah dijelaskan pada BAB III. Metode tersebut terdiri dari beberapa tahapan yang dilakukan secara bertahap untuk menghasilkan sistem yang sesuai dengan kebutuhan perusahaan, yaitu sebagai berikut:
+Tahap
+Aktivitas
+Requirements Gathering
+Pada tahap ini dilakukan observasi dan diskusi dengan pihak perusahaan untuk memahami proses approval sales order yang masih berjalan secara manual. Hasil analisis digunakan untuk mengidentifikasi kebutuhan sistem, seperti fitur login, pengelolaan data barang, pengajuan sales order, proses approval, pemantauan status pengajuan, serta manajemen akun pengguna.
+Design the Requirements
+Tim kemudian menyusun kebutuhan tersebut ke dalam rancangan sistem yang mencakup Use Case Diagram, Activity Diagram, Entity Relationship Diagram (ERD), struktur database, serta desain antarmuka untuk halaman Login, Dashboard, Data Barang, Sales Order, Approval, dan Akun.
+Coding
+Tim mengembangkan sistem secara bertahap menggunakan framework Laravel dan database MySQL. Proses pengembangan mencakup pembuatan fitur login, pengelolaan data barang, pengajuan sales order, proses approval, pemantauan status pengajuan, dashboard, serta pengelolaan akun pengguna.
+Testing
+Tim melakukan pengujian pada seluruh fitur sistem untuk memastikan setiap fungsi berjalan sesuai kebutuhan. Pengujian mencakup proses login, pengelolaan data barang, pengajuan sales order, proses approval, perubahan status pesanan, serta pengaturan hak akses sesuai peran masing-masing pengguna.
+Deployment
+Setelah sistem berhasil diuji dan berjalan dengan baik, aplikasi disiapkan untuk digunakan dalam operasional perusahaan. Pada tahap ini dilakukan pengaturan sistem serta pengecekan data untuk memastikan sistem dapat digunakan sesuai dengan kebutuhan perusahaan.
+Feedback
+Tim melakukan evaluasi berdasarkan hasil pengujian dan masukan dari pengguna. Hasil evaluasi tersebut digunakan untuk memperbaiki dan menyempurnakan fitur sistem, tampilan aplikasi, serta meningkatkan kemudahan penggunaan dalam proses approval sales order.
+Media Komunikasi dan Kolaborasi Tim
+Tools
+Kegunaan
+WhatsApp Group
+Komunikasi harian, diskusi proyek, dan koordinasi antaranggota tim.
+Trello
+Mengelola daftar tugas, pembagian pekerjaan, dan memantau progres pengembangan sistem.
+Google Drive
+Menyimpan serta berbagi dokumen proyek seperti laporan, diagram, desain sistem, dan dokumentasi lainnya.
+Visual Studio Code
+Digunakan sebagai editor kode dalam proses pengembangan sistem berbasis Laravel.
+MySQL
+Mengelola database sistem approval sales order.
+GitHub
+Menyimpan source code, mengelola versi program, dan memudahkan kolaborasi pengembangan aplikasi.
+Jadwal Perencanaan Projek
+Jadwal pelaksanaan proyek disusun untuk memastikan setiap tahapan pengembangan Sistem Informasi Approval Sales Order Berbasis Web dapat berjalan secara terstruktur dan sesuai target waktu yang telah ditetapkan. Pembagian waktu dilakukan berdasarkan tahapan metode Agile yang digunakan selama pengembangan sistem.
+Minggu
+Kegiatan
+1-2
+Jadwal pelaksanaan proyek disusun untuk memastikan setiap tahapan pengembangan Sistem Informasi Approval Sales Order Berbasis Web dapat berjalan secara terstruktur dan sesuai target waktu yang telah ditetapkan. Pembagian waktu dilakukan berdasarkan tahapan metode Agile yang digunakan selama pengembangan sistem.
+3-4
+Analisis kebutuhan fungsional dan non-fungsional serta penyusunan spesifikasi sistem.
+5-6
+Perancangan Use Case Diagram, Activity Diagram, ERD, dan struktur database.
+7-8
+Perancangan antarmuka pengguna (UI/UX) dan pembuatan prototipe sistem.
+9-11
+Pengembangan modul Login, Dashboard, dan Manajemen Akun.
+12-13
+Pengembangan modul Data Barang dan Sales Order.
+14-15
+Pengembangan modul Approval dan Monitoring Status Pesanan.
+16
+Pengujian sistem, evaluasi, perbaikan bug, penyusunan laporan, dan persiapan presentasi proyek.
+Melalui jadwal yang telah disusun tersebut, setiap anggota tim dapat memahami target pekerjaan pada masing-masing tahap pengembangan. Selain itu, jadwal ini menjadi acuan dalam melakukan monitoring progres proyek sehingga seluruh aktivitas pengembangan dapat berjalan sesuai rencana dan tujuan proyek dapat tercapai dengan baik.
+IX. 3 Evaluasi Kolaborasi Tim
+Evaluasi kolaborasi tim dilakukan untuk menilai efektivitas kerja sama selama pengembangan sistem ini. Evaluasi dilakukan melalui diskusi berkala, pemantauan progres pekerjaan, serta penilaian terhadap pencapaian target pada setiap tahap pengembangan sistem.
+Aspek Evaluasi
+Komunikasi Tim
+Komunikasi antaranggota tim dilakukan melalui WhatsApp Group dan diskusi langsung untuk mendukung koordinasi selama pengembangan sistem. Melalui komunikasi yang aktif, anggota tim dapat menyampaikan perkembangan pekerjaan, membahas kendala yang dihadapi, serta menentukan solusi dan keputusan yang diperlukan. Hal ini membantu setiap anggota memahami tugas dan tanggung jawabnya sehingga proses pengembangan sistem dapat berjalan dengan lebih terarah dan efektif.
+Penyelesaian Tugas
+Setiap anggota tim berupaya menyelesaikan tugas sesuai dengan peran yang telah ditetapkan. Penggunaan Trello membantu tim dalam memantau progres pekerjaan sehingga setiap aktivitas dapat dikerjakan sesuai jadwal yang telah direncanakan. Pembagian tugas yang jelas juga membantu mengurangi terjadinya tumpang tindih pekerjaan selama proses pengembangan.
+Kerja Sama Tim
+Kerja sama tim berjalan dengan baik selama proses pengembangan sistem. Setiap anggota aktif memberikan masukan dan membantu anggota lain ketika menghadapi kendala teknis maupun nonteknis. Kolaborasi yang baik antara analis sistem, programmer, desainer antarmuka, dan dokumentator mendukung penyelesaian proyek secara lebih efektif.
+Penyelesaian Kendala
+Beberapa kendala yang dihadapi selama pengembangan proyek ini antara lain:
+Perubahan kebutuhan sistem selama proses pengembangan.
+Penyesuaian jadwal antaranggota tim karena kesibukan masing-masing.
+Integrasi antara modul sistem dengan database.
+Pengujian fitur approval untuk memastikan proses persetujuan berjalan sesuai kebutuhan perusahaan.
+Perbaikan bug yang ditemukan saat pengujian sistem.
+Permasalahan tersebut dapat diatasi melalui koordinasi yang efektif, komunikasi yang rutin, pembagian tugas yang terstruktur, serta pelaksanaan pengujian sistem secara berkala pada setiap tahap pengembangan.
+Hasil Evaluasi Kolaborasi
+Aspek Evaluassi
+Hasil
+Komunikasi Tim Baik
+Baik
+Penyelesaian Tugas Baik
+Baik
+Kerja Sama Tim Sangat Baik
+Sangat Baik
+Penyelesaian KendalaBaik
+Baik
+Pencapaian Target Proyek
+Sangat Baik
+Berdasarkan hasil evaluasi, kerja sama tim selama proses pengembangan proyek dapat berjalan dengan baik. Setiap anggota mampu melaksanakan tugas dan tanggung jawab yang telah ditetapkan serta berkontribusi aktif dalam mengatasi berbagai kendala yang muncul selama pengembangan sistem.
+BAB X
+Penutup
+X.1 Kesimpulan Proyek
+X.2  Saran untuk pengembangan proyek di masa depan
+DAFTAR PUSTAKA
+Indriasari, S., Iskandar, K. P., Ramadhan, A. A., Ramadhan, F. M., Admiral, R., & Nasir, M. (2026). Identifikasi Kebutuhan Fungsional dan Nonfungsional Website Company Profile UMKM Nounoufood Menggunakan Pendekatan Deskriptif Kualitatif. Infomatek, 28(1), 59–69. https://doi.org/10.23969/infomatek.v28i1.36470
+Maulana, M. R. (2025). EVALUASI METODOLOGI WATERFALL DAN AGILE: STUDI LITERATUR PADA SISTEM PERPUSTAKAAN. Jurnal Informatika Dan Teknik Elektro Terapan, 13(1). https://doi.org/10.23960/jitet.v13i1.5900
+Safii, M. Y., & Ardhianto, E. (2024). Sistem Pendukung Keputusan dalam Pemilihan Sales Marketing Terbaik Menggunakan Simple Additive Weighting (SAW) Berbasis Website (Studi Kasus: PT. Citra Swarna Group (CSG). Jurnal Teknologi Informasi Dan Komunikasi), 8(1), 2024. https://doi.org/10.35870/jti
+ 

@@ -1,0 +1,1359 @@
+
+
+// ============================================================================
+// FILE: routes\web.php
+// ============================================================================
+
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BarangController;
+use App\Http\Controllers\PenjualanController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PembelianController; 
+use App\Http\Controllers\KeuanganController;
+use App\Http\Controllers\ReturController;
+use App\Http\Controllers\BackOrderController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ActivityLogController; 
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\LabaController;
+use App\Http\Controllers\LaporanController; // Tambahkan LaporanController
+
+// Halaman utama otomatis dialihkan langsung ke halaman login resmi
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+// Rute Otentikasi (Publik)
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Rute Utilitas Migrasi (Publik untuk memudahkan sinkronisasi hosting)
+Route::get('/run-migration', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return "<h3>Artisan Migrate Output:</h3><pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre><br><a href='/'>Kembali ke Beranda</a>";
+    } catch (\Exception $e) {
+        return "<h3>Artisan Migrate Gagal:</h3><pre>" . $e->getMessage() . "</pre>";
+    }
+});
+
+// Rute untuk Generate Dummy Data Khusus Presentasi (Bisa dihapus nanti)
+Route::get('/generate-dummy', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'DummyDataSeeder', '--force' => true]);
+        return "<h3>Sukses! Data Dummy (Palsu) telah berhasil di-generate.</h3><p>Silakan kembali ke <a href='/dashboard'>Dashboard</a> untuk melihat hasilnya.</p>";
+    } catch (\Exception $e) {
+        return "<h3>Gagal:</h3><pre>" . $e->getMessage() . "</pre>";
+    }
+});
+
+// Rute untuk Reset Web (Menghapus semua data dan kembali ke awal)
+Route::get('/reset-web', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
+        return "<h3>Web Berhasil Direset!</h3><p>Semua data transaksi telah dikosongkan. Akun login kembali ke pengaturan awal (direktur@gmail.com, dll).<br>Silakan kembali ke <a href='/login'>Halaman Login</a>.</p>";
+    } catch (\Exception $e) {
+        return "<h3>Gagal Reset Web:</h3><pre>" . $e->getMessage() . "</pre>";
+    }
+});
+
+// Rute yang WAJIB Login
+Route::middleware(['auth'])->group(function () {
+
+    // ===================================================
+    // AKSES UMUM & UTILITY AJAX (Bisa Diakses Semua Role)
+    // ===================================================
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Rute Bypass Symlink cPanel (403 Forbidden Fix)
+    Route::get('/berkas/{path}', function ($path) {
+        $file = storage_path('app/public/' . $path);
+        if (!file_exists($file)) abort(404);
+        return response()->file($file);
+    })->where('path', '.*')->name('berkas');
+
+    // ===================================================
+    // PUSAT LAPORAN KUSTOM (SMART REPORT BUILDER)
+    // ===================================================
+    Route::get('/pusat-laporan', [LaporanController::class, 'index'])->name('laporan.hub');
+    Route::post('/pusat-laporan/generate', [LaporanController::class, 'generate'])->name('laporan.generate');
+
+    // Endpoint AJAX untuk mengambil item barang berdasarkan SO / PO
+    Route::get('/get-items-so/{id}', [ReturController::class, 'getItemsSO'])->name('retur.get-items-so');
+    Route::get('/get-items-po/{id}', [ReturController::class, 'getItemsPO'])->name('retur.get-items-po');
+
+    // Endpoint API Notifikasi Real-time
+    Route::get('/api/notifications', [DashboardController::class, 'getNotifications'])->name('api.notifications');
+
+    // =======================================================================
+    // RUTE BUAT ORDER: Semua Role (Termasuk Direktur) bisa tes buat order
+    // =======================================================================
+    Route::get('/penjualan/buat', [PenjualanController::class, 'create'])->name('penjualan.create');
+    Route::post('/penjualan', [PenjualanController::class, 'store'])->name('penjualan.store');
+
+    // MANAJEMEN TINGKATAN & DATA CUSTOMER (Hanya Direktur & Hak Akses khusus - SALES DICABUT)
+    Route::middleware(['role:direktur,tingkat_cust'])->group(function () {
+        Route::get('/customer', [CustomerController::class, 'index'])->name('customer.index');
+        Route::post('/customer/{id}/update-tier', [CustomerController::class, 'updateTier'])->name('customer.updateTier');
+        Route::post('/customer/store', [CustomerController::class, 'store'])->name('customer.store');
+        Route::put('/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
+        Route::delete('/customer/{id}', [CustomerController::class, 'destroy'])->name('customer.destroy');
+    });
+
+    // HALAMAN KERJA DIVISI WAREHOUSE
+    Route::middleware(['role:direktur,admin_warehouse,warehouse,admin warehouse'])->group(function () {
+        Route::get('/warehouse/dashboard', [DashboardController::class, 'warehouseIndex'])->name('warehouse.dashboard');
+        Route::post('/penjualan/{id}/packing-selesai', [PenjualanController::class, 'updateToPackingSelesai'])->name('penjualan.packingSelesai');
+        Route::post('/penjualan/{id}/send-to-backorder', [PenjualanController::class, 'sendToBackorder'])->name('penjualan.sendToBackorder');
+    });
+
+    // FITUR RETUR BARANG
+    Route::middleware(['role:direktur,return_barang'])->group(function () {
+        Route::get('/warehouse/retur-penjualan', [ReturController::class, 'penjualanIndex'])->name('retur.penjualan.index');
+        Route::get('/warehouse/retur-penjualan/create', [ReturController::class, 'penjualanCreate'])->name('retur.penjualan.create');
+        Route::post('/warehouse/retur-penjualan', [ReturController::class, 'penjualanStore'])->name('retur.penjualan.store');
+        
+        Route::get('/warehouse/retur-pembelian', [ReturController::class, 'pembelianIndex'])->name('retur.pembelian.index');
+        Route::get('/warehouse/retur-pembelian/create', [ReturController::class, 'pembelianCreate'])->name('retur.pembelian.create');
+        Route::post('/warehouse/retur-pembelian', [ReturController::class, 'pembelianStore'])->name('retur.pembelian.store');
+        
+        // EKSEKUSI RETURN PENDING (RMA)
+        Route::post('/warehouse/retur-pembelian/eksekusi/{id}', [ReturController::class, 'eksekusiReturPending'])->name('retur.pembelian.eksekusi');
+    });
+
+    // HALAMAN KERJA DIVISI KEUANGAN & PIUTANG
+    Route::middleware(['role:direktur,admin_keuangan,keuangan,admin keuangan,admin_piutang,admin piutang'])->group(function () {
+        Route::get('/keuangan/dashboard', [DashboardController::class, 'keuanganIndex'])->name('keuangan.dashboard');
+    });
+
+    // MANAJEMEN PENJUALAN (Riwayat SO)
+    Route::get('/penjualan', [PenjualanController::class, 'index'])->name('penjualan.index');
+
+    // MASTER PEMBELIAN
+    Route::middleware(['role:direktur,pembelian_stok'])->group(function () {
+        Route::get('/pembelian', [PembelianController::class, 'index'])->name('pembelian.index');
+        Route::post('/pembelian', [PembelianController::class, 'store'])->name('pembelian.store');
+        Route::post('/pembelian/{id}/sortir', [PembelianController::class, 'prosesSortir'])->name('pembelian.sortir');
+    });
+
+    // MASTER DATA SUPPLIER
+    Route::middleware(['role:direktur,data_supplier'])->group(function () {
+        Route::get('/supplier', [SupplierController::class, 'index'])->name('supplier.index');
+        Route::post('/supplier', [SupplierController::class, 'store'])->name('supplier.store');
+        Route::put('/supplier/{id}', [SupplierController::class, 'update'])->name('supplier.update');
+        Route::delete('/supplier/{id}', [SupplierController::class, 'destroy'])->name('supplier.destroy');
+    });
+
+    // Route khusus akun staf
+    Route::middleware(['role:direktur,akun_staf'])->group(function () {
+        // MANAJEMEN ACCOUNTS / USER (Direktur & Hak Akses khusus)
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
+
+    Route::middleware(['role:direktur,approval_so'])->group(function () {
+        // Approval Direktur mutlak hanya untuk Direktur Utama
+        Route::get('/penjualan/approval', [PenjualanController::class, 'approvalList'])->name('penjualan.approval');
+        Route::post('/penjualan/approve/{id}', [PenjualanController::class, 'approve'])->name('penjualan.approve');
+    });
+
+    Route::middleware(['role:direktur,audit_trail'])->group(function () {
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
+    });
+
+    // KELOLA PENJUALAN (EDIT & HAPUS)
+    Route::middleware(['role:sales,direktur'])->group(function () {
+        Route::get('/sales/dashboard', [DashboardController::class, 'salesIndex'])->name('sales.dashboard');
+        Route::get('/penjualan/{id}/edit', [PenjualanController::class, 'edit'])->name('penjualan.edit');
+        Route::put('/penjualan/{id}', [PenjualanController::class, 'update'])->name('penjualan.update');
+        Route::delete('/penjualan/{id}', [PenjualanController::class, 'destroy'])->name('penjualan.destroy');
+    });
+    
+    Route::get('/penjualan/{id}/cetak/faktur', [PenjualanController::class, 'printFaktur'])->name('penjualan.printFaktur');
+    Route::get('/penjualan/{id}/cetak/surat-jalan', [PenjualanController::class, 'printSuratJalan'])->name('penjualan.printSuratJalan');
+    Route::get('/pengiriman/{id}/cetak/faktur', [PenjualanController::class, 'printFakturPengiriman'])->name('penjualan.printFakturPengiriman');
+    Route::get('/pengiriman/{id}/cetak/surat-jalan', [PenjualanController::class, 'printSuratJalanPengiriman'])->name('penjualan.printSuratJalanPengiriman');
+    Route::get('/penjualan/{id}', [PenjualanController::class, 'show'])->name('penjualan.show');
+
+    // Temporary route to fix stuck SO
+    Route::get('/fix-so', function() {
+        // Fix SO yang tertahan di draft padahal sudah disetujui
+        \App\Models\Penjualan::where('status_approval', 'disetujui')->where('status', 'draft')->update(['status' => 'diproses']);
+        
+        // Fix SO yang tertahan di menunggu_restock padahal sudah memiliki pengiriman
+        $stuckBOs = \App\Models\Penjualan::where('status', 'menunggu_restock')->has('pengirimans')->get();
+        foreach($stuckBOs as $so) {
+            $so->status = 'ready_to_invoice';
+            $so->save();
+        }
+        
+        return 'Data SO yang tersangkut berhasil diperbaiki. Silakan kembali ke halaman aplikasi.';
+    });
+
+    // ANTRIAN BACK ORDER
+    Route::middleware(['role:direktur,backorder'])->group(function () {
+        Route::get('/backorder', [BackOrderController::class, 'index'])->name('backorder.index');
+        Route::post('/backorder/penebusan/{id}', [BackOrderController::class, 'penebusan'])->name('backorder.penebusan');
+    });
+
+    // DATA BARANG
+    Route::middleware(['role:direktur,data_barang'])->group(function () {
+        Route::get('/barang', [BarangController::class, 'index'])->name('barang.index');
+        Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
+        Route::get('/barang/{id}/edit', [BarangController::class, 'edit'])->name('barang.edit');
+        Route::put('/barang/{id}', [BarangController::class, 'update'])->name('barang.update');
+        Route::delete('/barang/{id}', [BarangController::class, 'destroy'])->name('barang.destroy');
+        Route::get('/barang/{id}/history', [BarangController::class, 'history'])->name('barang.history');
+        Route::post('/barang/import', [BarangController::class, 'importCsv'])->name('barang.import');
+    });
+
+    // LAPORAN LABA
+    Route::middleware(['role:direktur,profit_laba'])->group(function () {
+        Route::get('/laporan/laba', [LabaController::class, 'index'])->name('laba.index'); 
+    });
+
+    // KEUANGAN, PIUTANG, UTANG, CREDIT NOTE
+    Route::middleware(['role:direktur,akses_keuangan,admin_keuangan,keuangan'])->group(function () {
+        Route::post('/keuangan/credit-note/store', [KeuanganController::class, 'storeCreditNote'])->name('keuangan.creditNote.store');
+        Route::get('/keuangan/piutang', [KeuanganController::class, 'piutangIndex'])->name('keuangan.piutang.index');
+        Route::get('/keuangan/piutang/{id}', [KeuanganController::class, 'piutangShow'])->name('keuangan.piutang.show');
+        Route::post('/keuangan/piutang/bayar/{id}', [KeuanganController::class, 'piutangBayar'])->name('keuangan.piutang.bayar');
+        Route::get('/keuangan/utang', [KeuanganController::class, 'utangIndex'])->name('keuangan.utang.index');
+        Route::get('/keuangan/utang/{id}', [KeuanganController::class, 'utangShow'])->name('keuangan.utang.show');
+        Route::post('/keuangan/utang/bayar/{id}', [KeuanganController::class, 'utangBayar'])->name('keuangan.utang.bayar');
+    });
+});
+
+// TEMPORARY ROUTE TO RUN DB MIGRATIONS FOR INDEXING
+Route::get('/run-migration-indexes', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return '<h1>Migrasi Sukses!</h1><p>Database indexing telah berhasil ditambahkan. Silakan kembali ke <a href="/">Dashboard</a>.</p>';
+    } catch (\Exception $e) {
+        return '<h1>Gagal!</h1><p>' . $e->getMessage() . '</p>';
+    }
+});
+
+
+// ============================================================================
+// FILE: app\Http\Controllers\PenjualanController.php
+// ============================================================================
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Penjualan;
+use App\Models\PenjualanDetail;
+use App\Models\Barang;
+use App\Models\Customer;
+use App\Models\Piutang;
+use App\Models\StockHistory;
+use App\Models\BackOrder; 
+use App\Models\ActivityLog; 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+class PenjualanController extends Controller
+{
+    // =========================================================================
+    // 1. FUNGSI "OTAK" SPK (SAW Method)
+    // =========================================================================
+    private function hitungSkorSpk($penjualan) 
+    {
+        $penjualan = $penjualan->fresh(['details.barang', 'customer']);
+        
+        $akumulasiSkor = 0;
+        $count = $penjualan->details->count();
+
+        if ($count == 0) return 0; 
+
+        foreach ($penjualan->details as $detail) {
+            $barang = $detail->barang;
+            if (!$barang) continue;
+            
+            $hargaNetto = $detail->harga_satuan - ($detail->diskon ?? 0);
+            $profitMargin = (($hargaNetto - $barang->harga_beli) / ($barang->harga_beli ?: 1)) * 100;
+            
+            $skorMargin = ($profitMargin >= 20) ? 100 : (($profitMargin >= 5) ? 60 : 20);
+            
+            $persenSisa = (($barang->stok_akhir - $detail->jumlah) / ($barang->stok_awal ?: 1)) * 100;
+            $skorStok = ($persenSisa >= 20) ? 100 : ($persenSisa >= 5 ? 50 : 10);
+            
+            $skorCust = ($penjualan->customer->npwp && $penjualan->customer->ktp) ? 100 : 50;
+            
+            $trackRecord = Penjualan::where('user_id', $penjualan->user_id)
+                                    ->where('status_approval', 'disetujui')->count();
+            $skorSales = ($trackRecord >= 5) ? 100 : 50;
+
+            $akumulasiSkor += ($skorMargin * 0.4) + ($skorStok * 0.3) + ($skorCust * 0.2) + ($skorSales * 0.1);
+        }
+
+        $rataRataSkor = ($akumulasiSkor / $count);
+        
+        $penjualan->skor_spk = $rataRataSkor;
+        $penjualan->save();
+
+        return $rataRataSkor; 
+    }
+
+    // =========================================================================
+    // 2. TAMPILAN INDEX & SHOW
+    // =========================================================================
+    public function index(Request $request)
+    {
+        $search = $request->input('search');
+        $query = Penjualan::with(['customer', 'user', 'details.barang']);
+        $role = strtolower(Auth::user()->role);
+        
+        if (in_array($role, ['sales', 'marketing'])) {
+            $query->where('user_id', Auth::id());
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('no_so', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function ($q2) use ($search) {
+                      $q2->where('nama_customer', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        $pengajuan = $query->orderBy('created_at', 'asc')->paginate(50)->withQueryString();
+        return view('penjualan.index', compact('pengajuan', 'search'));
+    }
+
+    public function show($id)
+    {
+        $penjualan = Penjualan::with(['customer', 'details.barang', 'user'])->findOrFail($id);
+        $role = strtolower(Auth::user()->role);
+
+        if (in_array($role, ['sales', 'marketing']) && $penjualan->user_id != Auth::id()) {
+            abort(403, 'Akses ditolak. Anda hanya dapat melihat dokumen milik Anda sendiri.');
+        }
+        
+        return view('penjualan.show', compact('penjualan'));
+    }
+
+    public function create()
+    {
+        $barangs = Barang::orderBy('kode_barang', 'asc')->get(); 
+        $customers = Customer::orderBy('nama_customer', 'asc')->get();
+        return view('penjualan.buat', compact('barangs', 'customers'));
+    }
+
+    // =========================================================================
+    // 3. BUAT PESANAN BARU (STATUS AWAL: DRAFT)
+    // =========================================================================
+    public function store(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required',
+            'barang_id' => 'required|array',
+            'jumlah' => 'required|array',
+            'harga_satuan' => 'required|array',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            $customer = Customer::findOrFail($request->customer_id);
+            if ($request->npwp || $request->ktp) {
+                $customer->update([
+                    'npwp' => $request->npwp ?? $customer->npwp,
+                    'ktp' => $request->ktp ?? $customer->ktp,
+                ]);
+            }
+
+            $lastId = Penjualan::max('id') ?? 0;
+            $no_so = 'SO-' . date('Ymd') . '-' . str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
+            
+            $penjualan = Penjualan::create([
+                'no_so' => $no_so,
+                'tanggal_order' => date('Y-m-d'),
+                'customer_id' => $customer->id,
+                'user_id' => Auth::id(),
+                'total_semua' => 0,
+                'status_approval' => 'pending',
+                'status' => 'draft',
+                'sales_created_at' => now(),
+            ]);
+
+            $total_semua = 0;
+            foreach ($request->barang_id as $index => $id_barang) {
+                $barang = Barang::findOrFail($id_barang);
+                $diskonItem = $request->diskon[$index] ?? 0;
+                $subtotal = $request->jumlah[$index] * ($request->harga_satuan[$index] - $diskonItem);
+                $total_semua += $subtotal;
+
+                PenjualanDetail::create([
+                    'penjualan_id' => $penjualan->id,
+                    'barang_id' => $barang->id,
+                    'hpp' => $barang->harga_beli ?? 0, // <--- KUNCI HPP DIAMBIL DARI MASTER BARANG SAAT INI
+                    'harga_satuan' => $request->harga_satuan[$index],
+                    'diskon' => $diskonItem,
+                    'jumlah' => $request->jumlah[$index],
+                    'subtotal' => $subtotal,
+                ]);
+            }
+
+            $penjualan->total_semua = $total_semua;
+            $penjualan->save();
+            
+            $skorFinal = $this->hitungSkorSpk($penjualan);
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'BUAT SO',
+                'description' => Auth::user()->name . ' membuat dokumen Sales Order baru: ' . $penjualan->no_so,
+                'ip_address' => $request->ip(),
+            ]);
+
+            DB::commit();
+            
+            return redirect()->route('penjualan.index')
+                             ->with('success', "Order berhasil diajukan dengan skor kelayakan " . number_format($skorFinal, 0) . "%");
+                             
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    // =========================================================================
+    // 4. APPROVAL DIREKTUR 
+    // =========================================================================
+    public function approvalList()
+    {
+        $pengajuan = Penjualan::with(['customer', 'details.barang', 'user'])->where('status_approval', 'pending')->orderBy('created_at', 'asc')->get();
+        return view('penjualan.approval', compact('pengajuan'));
+    }
+
+    public function approve(Request $request, $id)
+    {
+        $penjualan = Penjualan::findOrFail($id);
+        
+        try {
+            DB::beginTransaction();
+
+            if ($request->status == 'disetujui' && $request->has('harga_edit')) {
+                $total_keseluruhan_baru = 0;
+                foreach ($request->harga_edit as $detail_id => $harga_baru) {
+                    $detail = PenjualanDetail::findOrFail($detail_id);
+                    $detail->harga_satuan = $harga_baru; 
+                    
+                    if ($request->has('jumlah_edit') && isset($request->jumlah_edit[$detail_id])) {
+                        $detail->jumlah = $request->jumlah_edit[$detail_id];
+                    }
+
+                    $subtotal_baru = $detail->jumlah * $harga_baru;
+                    $detail->subtotal = $subtotal_baru;
+                    $detail->save();
+                    
+                    $total_keseluruhan_baru += $subtotal_baru;
+                }
+                $penjualan->total_semua = $total_keseluruhan_baru;
+            }
+
+            if ($request->status == 'disetujui') {
+                // Check if user is manager and it is over limit
+                if (strtolower(Auth::user()->role) === 'manager') {
+                    $sisa_limit = $penjualan->customer->sisa_plafon ?? 0;
+                    if ($penjualan->total_semua > $sisa_limit) {
+                        throw new \Exception('Akun staf dengan role Manager tidak diizinkan menyetujui pesanan yang melebihi limit kredit!');
+                    }
+                }
+
+                $penjualan->status_approval = 'disetujui';
+                $penjualan->status = 'diproses';
+                $penjualan->approved_at = now();
+                $penjualan->catatan = $request->catatan;
+            } else {
+                $penjualan->status_approval = 'ditolak';
+                $penjualan->catatan = $request->catatan;
+            }
+            
+            $penjualan->save();
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => ($request->status == 'disetujui') ? 'SETUJUI SO' : 'TOLAK SO',
+                'description' => Auth::user()->name . ' telah ' . strtoupper($request->status) . ' dokumen: ' . $penjualan->no_so,
+                'ip_address' => $request->ip(),
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Keputusan berhasil disimpan! Silakan lanjut ke proses Packing.');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Gagal memproses persetujuan: ' . $e->getMessage()]);
+        }
+    }
+
+    // =========================================================================
+    // 5. FUNGSI SEND TO BACKORDER (KIRIM SO KE ANTREAN BO KARENA STOK KOSONG TOTAL)
+    // =========================================================================
+    public function sendToBackorder($id)
+    {
+        $penjualan = Penjualan::with('details')->findOrFail($id);
+
+        if ($penjualan->status_approval !== 'disetujui') {
+            return back()->with('error', 'Gagal: Order harus disetujui terlebih dahulu.');
+        }
+
+        // Cegah duplikasi jika sudah di-backorder
+        if ($penjualan->status === 'menunggu_restock') {
+            return redirect()->route('backorder.index')->with('success', 'Order sudah berada di antrean Back Order.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $penjualan->status = 'menunggu_restock';
+            $penjualan->save();
+
+            foreach ($penjualan->details as $detail) {
+                $barang = Barang::findOrFail($detail->barang_id);
+                
+                // Jika butuh dikirim, langsung jadikan backorder semuanya karena 0 shippable total
+                if ($detail->jumlah > 0) {
+                    BackOrder::create([
+                        'penjualan_id' => $penjualan->id,
+                        'barang_id' => $barang->id,
+                        'jumlah_diminta' => $detail->jumlah, 
+                        'jumlah_kurang' => $detail->jumlah,
+                        'status_bo' => 'antrean'
+                    ]);
+                }
+            }
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'KIRIM KE BO',
+                'description' => Auth::user()->name . ' memindahkan SO ' . $penjualan->no_so . ' ke antrean Back Order karena stok kosong.',
+                'ip_address' => request()->ip(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('backorder.index')->with('success', 'Order telah dipindahkan ke antrean Back Order. Silakan lakukan restock sebelum mem-packing.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Gagal memproses back order: ' . $e->getMessage()]);
+        }
+    }
+
+    // =========================================================================
+    // 6. FUNGSI WAREHOUSE PACKING (MEMOTONG STOK & MEMBUAT BACK ORDER PARSIAL)
+    // =========================================================================
+    public function updateToPackingSelesai($id)
+    {
+        // Gunakan lockForUpdate untuk mencegah Race Condition (Double Packing)
+        $penjualan = Penjualan::with('details')->lockForUpdate()->findOrFail($id);
+        
+        if ($penjualan->status_approval !== 'disetujui') {
+            return back()->with('error', 'Gagal: Order harus disetujui oleh Direktur terlebih dahulu.');
+        }
+
+        if ($penjualan->status === 'ready_to_invoice') {
+             return back()->with('error', 'Gagal: Barang ini sudah dipacking sebelumnya.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Ambil data BackOrder yang masih mengantre untuk SO ini
+            $activeBackorders = BackOrder::where('penjualan_id', $penjualan->id)->where('status_bo', 'antrean')->get();
+
+            $penjualan->status = 'ready_to_invoice';
+            $penjualan->save();
+            
+            $adaBackOrder = false;
+            $totalTagihanAwal = 0; // Tambahan: Hitung total tagihan hanya untuk barang yang terkirim
+
+            // Create Pengiriman record
+            $noSOBase = str_replace('SO-', '', $penjualan->no_so);
+            $noINVBase = str_replace('SO', 'INV', $penjualan->no_so);
+            $pengiriman = \App\Models\Pengiriman::create([
+                'penjualan_id' => $penjualan->id,
+                'no_pengiriman' => 'SJ-' . $noSOBase . '-1',
+                'no_invoice' => $noINVBase . '-1',
+                'tanggal_kirim' => now()->toDateString(),
+                'plat_kendaraan' => null,
+                'catatan' => 'Pengiriman Tahap 1 (Parsial/Full)',
+            ]);
+
+            foreach ($penjualan->details as $detail) {
+                // Kunci baris barang agar stok tidak direbut oleh transaksi lain yang berjalan bersamaan (Race Condition)
+                $barang = Barang::where('id', $detail->barang_id)->lockForUpdate()->firstOrFail();
+                $stokSebelumnya = $barang->stok_akhir;
+
+                // Logika Parsial: Kirim seadanya stok saat ini
+                $qtyDikirimSekarang = ($barang->stok_akhir >= $detail->jumlah) ? $detail->jumlah : max(0, $barang->stok_akhir);
+                $jumlahKurang = $detail->jumlah - $qtyDikirimSekarang;
+                
+                // Tambahan: Tambahkan nilai barang yang benar-benar terkirim saat ini ke Piutang
+                $totalTagihanAwal += ($qtyDikirimSekarang * $detail->harga_satuan);
+
+                $existingBo = $activeBackorders->where('barang_id', $barang->id)->first();
+
+                if ($jumlahKurang > 0) {
+                    if ($existingBo) {
+                        $existingBo->update(['jumlah_kurang' => $jumlahKurang]);
+                    } else {
+                        BackOrder::create([
+                            'penjualan_id' => $penjualan->id,
+                            'barang_id' => $barang->id,
+                            'jumlah_diminta' => $detail->jumlah, 
+                            'jumlah_kurang' => $jumlahKurang,
+                            'status_bo' => 'antrean'
+                        ]);
+                    }
+                    $adaBackOrder = true;
+                } else {
+                    if ($existingBo) {
+                        $existingBo->update(['status_bo' => 'terpenuhi']);
+                    }
+                }
+
+                if ($qtyDikirimSekarang > 0) {
+                    $barang->update([
+                        'stok_akhir'   => $barang->stok_akhir - $qtyDikirimSekarang,
+                        'barang_keluar' => $barang->barang_keluar + $qtyDikirimSekarang,
+                    ]);
+
+                    StockHistory::record(
+                        $barang,
+                        -$qtyDikirimSekarang,
+                        'sale',
+                        $penjualan->no_so,
+                        'Pengiriman Packing (Parsial/Full).',
+                        $stokSebelumnya
+                    );
+
+                    \App\Models\PengirimanDetail::create([
+                        'pengiriman_id' => $pengiriman->id,
+                        'barang_id' => $barang->id,
+                        'jumlah_kirim' => $qtyDikirimSekarang,
+                        'harga_satuan' => $detail->harga_satuan,
+                        'subtotal' => $qtyDikirimSekarang * $detail->harga_satuan,
+                    ]);
+                }
+            }
+
+            $no_invoice = str_replace('SO', 'INV', $penjualan->no_so);
+            
+            Piutang::firstOrCreate(
+                ['no_invoice' => $no_invoice], 
+                [
+                    'penjualan_id' => $penjualan->id,
+                    'total_tagihan' => $totalTagihanAwal, // Diubah agar sesuai jumlah terkirim
+                    'potongan' => 0, 
+                    'total_dibayar' => 0,
+                    'status_bayar' => 'belum_bayar',
+                    'jatuh_tempo' => \Carbon\Carbon::now()->addDays((int)($penjualan->customer->tempo_hari ?? 30)),
+                    'diinput_by' => Auth::id(),
+                ]
+            );
+
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'UPDATE STATUS',
+                'description' => Auth::user()->name . ' menyelesaikan proses packing untuk SO: ' . $penjualan->no_so,
+                'ip_address' => request()->ip(),
+            ]);
+            
+            DB::commit();
+
+            if ($adaBackOrder) {
+                return back()->with('success', 'Packing Parsial berhasil! Stok yang ada sudah dipotong. Barang yang kurang otomatis masuk ke antrean Back Order.');
+            } else {
+                return back()->with('success', 'Packing Selesai! Semua pesanan lengkap dan stok telah berhasil dipotong 100%.');
+            }
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Gagal memproses packing: ' . $e->getMessage()]);
+        }
+    }
+
+    // =========================================================================
+    // 6. PRINT SURAT & FAKTUR
+    // =========================================================================
+    public function printFaktur($id)
+    {
+        if (strtolower(Auth::user()->role) === 'sales') {
+            abort(403, 'Akses Ditolak: Sales tidak diizinkan mencetak dokumen faktur/surat jalan.');
+        }
+        $penjualan = Penjualan::findOrFail($id);
+        if ($penjualan->status === 'draft') abort(403, 'Akses Ditolak: Pesanan masih draft dan tidak dapat dicetak.');
+        $pengiriman = \App\Models\Pengiriman::where('penjualan_id', $id)->orderBy('id', 'asc')->first();
+        if (!$pengiriman) abort(404, 'Pengiriman tidak ditemukan.');
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CETAK FAKTUR',
+            'description' => Auth::user()->name . ' mencetak Faktur untuk SO: ' . $penjualan->no_so,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return view('penjualan.faktur_print', compact('pengiriman'));
+    }
+
+    public function printSuratJalan($id)
+    {
+        if (strtolower(Auth::user()->role) === 'sales') {
+            abort(403, 'Akses Ditolak: Sales tidak diizinkan mencetak dokumen faktur/surat jalan.');
+        }
+        $penjualan = Penjualan::findOrFail($id);
+        if ($penjualan->status === 'draft') abort(403, 'Akses Ditolak: Pesanan masih draft dan tidak dapat dicetak.');
+        $pengiriman = \App\Models\Pengiriman::where('penjualan_id', $id)->orderBy('id', 'asc')->first();
+        if (!$pengiriman) abort(404, 'Pengiriman tidak ditemukan.');
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CETAK SURAT JALAN',
+            'description' => Auth::user()->name . ' mencetak Surat Jalan untuk SO: ' . $penjualan->no_so,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return view('penjualan.surat_jalan_print', compact('pengiriman'));
+    }
+
+    public function printFakturPengiriman($id)
+    {
+        if (strtolower(Auth::user()->role) === 'sales') {
+            abort(403, 'Akses Ditolak: Sales tidak diizinkan mencetak dokumen faktur/surat jalan.');
+        }
+        $pengiriman = \App\Models\Pengiriman::with(['penjualan.customer', 'details.barang'])->findOrFail($id);
+        
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CETAK FAKTUR PENGIRIMAN',
+            'description' => Auth::user()->name . ' mencetak Faktur untuk Pengiriman: ' . $pengiriman->no_pengiriman,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return view('penjualan.faktur_print', compact('pengiriman'));
+    }
+
+    public function printSuratJalanPengiriman($id)
+    {
+        if (strtolower(Auth::user()->role) === 'sales') {
+            abort(403, 'Akses Ditolak: Sales tidak diizinkan mencetak dokumen faktur/surat jalan.');
+        }
+        $pengiriman = \App\Models\Pengiriman::with(['penjualan.customer', 'details.barang'])->findOrFail($id);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'CETAK SURAT JALAN PENGIRIMAN',
+            'description' => Auth::user()->name . ' mencetak Surat Jalan untuk Pengiriman: ' . $pengiriman->no_pengiriman,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return view('penjualan.surat_jalan_print', compact('pengiriman'));
+    }
+
+    // =========================================================================
+    // 7. EDIT, UPDATE, DESTROY
+    // =========================================================================
+    public function edit($id)
+    {
+        $penjualan = Penjualan::with(['customer', 'details.barang'])->findOrFail($id);
+        if (strtolower(Auth::user()->role) === 'sales' && $penjualan->user_id != Auth::id()) {
+            return redirect()->route('penjualan.index')->with('error', 'Anda tidak berhak mengedit pesanan milik orang lain.');
+        }
+        if ($penjualan->status !== 'draft') return redirect()->route('penjualan.index')->with('error', 'Tidak dapat diedit.');
+        return view('penjualan.edit', compact('penjualan'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate(['harga_awal' => 'required|array', 'harga_satuan' => 'required|array', 'jumlah' => 'required|array']);
+        try {
+            DB::beginTransaction();
+            $penjualan = Penjualan::findOrFail($id);
+            if (strtolower(Auth::user()->role) === 'sales' && $penjualan->user_id != Auth::id()) {
+                throw new \Exception('Anda tidak berhak mengedit pesanan milik orang lain.');
+            }
+            if ($penjualan->status !== 'draft') throw new \Exception('Pesanan sudah diproses.');
+            $total_semua = 0;
+            foreach ($request->detail_id as $index => $detailId) {
+                $detail = PenjualanDetail::findOrFail($detailId);
+                $diskonItem = $request->diskon[$index] ?? 0;
+                $subtotal = $request->jumlah[$index] * ($request->harga_satuan[$index] - $diskonItem);
+                $detail->update(['diskon' => $diskonItem, 'harga_satuan' => $request->harga_satuan[$index], 'jumlah' => $request->jumlah[$index], 'subtotal' => $subtotal]);
+                $total_semua += $subtotal;
+            }
+            $penjualan->total_semua = $total_semua;
+            $penjualan->save();
+            
+            $this->hitungSkorSpk($penjualan);
+            
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => 'EDIT SO',
+                'description' => Auth::user()->name . ' mengubah rincian draf Sales Order: ' . $penjualan->no_so,
+                'ip_address' => $request->ip(),
+            ]);
+
+            DB::commit();
+            return redirect()->route('penjualan.index')->with('success', 'Perubahan berhasil.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function destroy($id)
+    {
+        $penjualan = Penjualan::findOrFail($id);
+        
+        if (strtolower(Auth::user()->role) === 'sales' && $penjualan->user_id !== Auth::id()) {
+            return back()->with('error', 'Anda tidak berhak membatalkan pesanan milik orang lain.');
+        }
+
+        if ($penjualan->status_approval !== 'pending') {
+            return back()->with('error', 'Tidak dapat membatalkan Sales Order yang sudah disetujui atau ditolak.');
+        }
+        
+        $penjualan->status_approval = 'dibatalkan';
+        $penjualan->status = 'batal';
+        $penjualan->save();
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'BATAL SO',
+            'description' => Auth::user()->name . ' membatalkan draf Sales Order: ' . $penjualan->no_so,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return back()->with('success', 'Sales Order berhasil dibatalkan.');
+    }
+}
+
+
+// ============================================================================
+// FILE: app\Http\Controllers\DashboardController.php
+// ============================================================================
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Penjualan;
+use App\Models\Barang;
+use App\Models\Piutang; 
+use App\Models\Utang;
+use App\Models\BackOrder; 
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        $data = Cache::remember('dashboard_index', 600, function () {
+            // 1. Total SO Keseluruhan
+            $totalSO = Penjualan::count();
+            
+            // 2. Menunggu Approval (Pending)
+            $menungguApproval = Penjualan::where('status_approval', 'pending')->count(); 
+            
+            $totalBarang = Barang::count();
+            $stokKritis = Barang::where('stok_akhir', '<=', 15)->count();
+
+            $salesBulan = [];
+            $salesData = [];
+            $omzetData = [];
+            
+            for ($i = 5; $i >= 0; $i--) {
+                $bulan = Carbon::now()->subMonths($i);
+                $salesBulan[] = $bulan->translatedFormat('M'); 
+                
+                $countSO = Penjualan::whereYear('created_at', $bulan->year)
+                                    ->whereMonth('created_at', $bulan->month)
+                                    ->count();
+                
+                $omzetSO = Penjualan::whereYear('created_at', $bulan->year)
+                                    ->whereMonth('created_at', $bulan->month)
+                                    ->where('status_approval', 'disetujui') // Omzet hanya dari yang disetujui
+                                    ->sum('total_semua');
+
+                $salesData[] = $countSO;
+                $omzetData[] = (float) $omzetSO;
+            }
+            
+            $statusMenunggu = $menungguApproval; 
+
+            // 3. Status Selesai / Disetujui 
+            $statusSelesai = Penjualan::where('status_approval', 'disetujui')->count();
+            
+            // 4. Status Ditolak
+            $statusDitolak = Penjualan::whereIn('status_approval', ['ditolak', 'batal'])->count();
+            
+            $statusData = [$statusSelesai, $statusMenunggu, $statusDitolak];
+
+            return compact('totalSO', 'menungguApproval', 'totalBarang', 'stokKritis', 'salesBulan', 'salesData', 'omzetData', 'statusData');
+        });
+
+        return view('dashboard', $data);
+    }
+
+    public function salesIndex()
+    {
+        $userId = Auth::id();
+
+        $data = Cache::remember('dashboard_sales_' . $userId, 600, function () use ($userId) {
+            // 1. Total SO Pribadi
+            $totalSO = Penjualan::where('user_id', $userId)->count();
+            
+            // 2. SO Pending Pribadi
+            $menungguApproval = Penjualan::where('user_id', $userId)
+                                         ->where('status_approval', 'pending')->count(); 
+
+            // 3. Omzet Pribadi Bulan Ini
+            $omzetBulanIni = Penjualan::where('user_id', $userId)
+                                      ->where('status_approval', 'disetujui')
+                                      ->whereMonth('created_at', Carbon::now()->month)
+                                      ->whereYear('created_at', Carbon::now()->year)
+                                      ->sum('total_semua');
+
+            // SO Terbaru dari Sales Ini
+            $recentSO = Penjualan::with('customer')
+                                 ->where('user_id', $userId)
+                                 ->orderBy('created_at', 'asc')
+                                 ->take(5)
+                                 ->get();
+
+            $salesBulan = [];
+            $salesData = [];
+            $omzetData = [];
+            
+            for ($i = 5; $i >= 0; $i--) {
+                $bulan = Carbon::now()->subMonths($i);
+                $salesBulan[] = $bulan->translatedFormat('M'); 
+                
+                $countSO = Penjualan::where('user_id', $userId)
+                                    ->whereYear('created_at', $bulan->year)
+                                    ->whereMonth('created_at', $bulan->month)
+                                    ->count();
+                
+                $omzetSO = Penjualan::where('user_id', $userId)
+                                    ->whereYear('created_at', $bulan->year)
+                                    ->whereMonth('created_at', $bulan->month)
+                                    ->where('status_approval', 'disetujui')
+                                    ->sum('total_semua');
+
+                $salesData[] = $countSO;
+                $omzetData[] = (float) $omzetSO;
+            }
+
+            $statusSelesai = Penjualan::where('user_id', $userId)->where('status_approval', 'disetujui')->count();
+            $statusDitolak = Penjualan::where('user_id', $userId)->whereIn('status_approval', ['ditolak', 'batal'])->count();
+            $statusData = [$statusSelesai, $menungguApproval, $statusDitolak];
+
+            return compact('totalSO', 'menungguApproval', 'omzetBulanIni', 'recentSO', 'salesBulan', 'salesData', 'omzetData', 'statusData');
+        });
+
+        return view('sales.dashboard', $data);
+    }
+
+    public function getNotifications()
+    {
+        $user = Auth::user();
+        $role = strtolower($user->role);
+        $userId = $user->id;
+        $isSales = in_array($role, ['sales', 'marketing']);
+
+        // 1. Pending Approvals
+        $pendingApprovals = Penjualan::when($isSales, function ($query) use ($userId) {
+            return $query->where('user_id', $userId);
+        })->where('status_approval', 'pending')->count();
+
+        // 2. Stok Kritis (Low Stock) dan Habis (Out of Stock)
+        $lowStock = Barang::where('stok_akhir', '>', 0)->where('stok_akhir', '<=', 15)->count();
+        $outOfStock = Barang::where('stok_akhir', '<=', 0)->count();
+
+        // 3. Antrean BO (Back Order)
+        $backOrder = BackOrder::where('status_bo', 'antrean')->count();
+
+        // 4. Overdue Piutang (Jatuh Tempo)
+        $overduePiutang = Piutang::where('status_bayar', '!=', 'Lunas')
+            ->whereDate('jatuh_tempo', '<', Carbon::now()->toDateString())
+            ->count();
+
+        // 5. Overdue Utang (Jatuh Tempo Supplier)
+        $overdueUtang = Utang::where('status_bayar', 'belum_bayar')
+            ->whereDate('tanggal_jatuh_tempo', '<', Carbon::now()->toDateString())
+            ->count();
+
+        // 6. Retur Tertahan
+        $returPembelianPending = DB::table('returs')->where('tipe', 'pembelian')->where('status_retur', 'pending')->count();
+        $returPenjualanPending = DB::table('returs')->where('tipe', 'penjualan')->where('status_retur', 'pending')->count();
+        $returPending = $returPembelianPending + $returPenjualanPending;
+
+        $totalNotifications = $pendingApprovals + $lowStock + $outOfStock + $backOrder + $overduePiutang + $overdueUtang + $returPending;
+
+        return response()->json([
+            'total' => $totalNotifications,
+            'pending_approvals' => $pendingApprovals,
+            'low_stock' => $lowStock,
+            'out_of_stock' => $outOfStock,
+            'back_order' => $backOrder,
+            'overdue_piutang' => $overduePiutang,
+            'overdue_utang' => $overdueUtang,
+            'retur_pending' => $returPending,
+        ]);
+    }
+
+    public function warehouseIndex()
+    {
+        $totalProduk = Barang::count();
+        $stokKritis = Barang::where('stok_akhir', '<=', 15)->count();
+        $pesananMenungguPacking = Penjualan::where('status_approval', 'disetujui')
+                                           ->where('status', 'diproses')
+                                           ->count();
+        $antreanBackOrder = BackOrder::where('status_bo', 'antrean')->count();
+
+        // UPGRADE: Mengambil 5 antrean SO teratas yang sudah disetujui tapi belum dipacking
+        $tabelPacking = Penjualan::with('customer')
+                            ->where('status_approval', 'disetujui')
+                            ->where('status', 'diproses')
+                            ->orderBy('updated_at', 'asc') // Pakai asc agar yang paling lama menunggu muncul duluan
+                            ->take(5)
+                            ->get();
+
+        return view('warehouse.dashboard', compact(
+            'totalProduk', 'stokKritis', 'pesananMenungguPacking', 'antreanBackOrder', 'tabelPacking'
+        )); 
+    }
+
+    public function keuanganIndex()
+    {
+        $data = Cache::remember('dashboard_keuangan', 600, function () {
+            $totalOmzet = Piutang::sum('total_tagihan');
+
+            $piutangBerjalan = Piutang::where('status_bayar', '!=', 'Lunas')->get()->sum(function($item) {
+                return $item->total_tagihan - $item->total_dibayar - $item->potongan;
+            });
+
+            $kewajibanUtang = 0;
+            if (class_exists('\App\Models\Utang')) {
+                $kewajibanUtang = \App\Models\Utang::where('status_bayar', '!=', 'Lunas')->get()->sum(function($item) {
+                    return $item->total_utang - $item->total_dibayar;
+                });
+            }
+
+            $soDisetujui = Penjualan::where('status_approval', 'disetujui')->count();
+            $riwayat = Piutang::with('penjualan.customer')->orderBy('updated_at', 'asc')->take(10)->get();
+
+            return compact('totalOmzet', 'piutangBerjalan', 'kewajibanUtang', 'soDisetujui', 'riwayat');
+        });
+
+        return view('keuangan.dashboard', $data); 
+    }
+
+    public function exportLaporan(Request $request)
+    {
+        // ... omitted since it's export, maybe less performance critical for load
+    }
+}
+
+
+// ============================================================================
+// FILE: app\Http\Controllers\LaporanController.php
+// ============================================================================
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\LaporanExport;
+
+class LaporanController extends Controller
+{
+    /**
+     * Menampilkan halaman utama pusat laporan (Dasbor Hub).
+     */
+    public function index()
+    {
+        return view('laporan.hub');
+    }
+
+    /**
+     * Memproses filter parameter dan menghasilkan output laporan (PDF/Excel).
+     */
+    public function generate(Request $request)
+    {
+        $kategori = $request->kategori_laporan;
+        $periode = $request->periode;
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+        $format = $request->format_export;
+        $groupBy = $request->group_by ?? [];
+
+        // =========================================================================
+        // 1. PENGATURAN PERIODE WAKTU (DATE FILTER)
+        // =========================================================================
+        $qStart = null;
+        $qEnd = null;
+        $periodeLabel = "Semua Waktu";
+
+        if ($periode === 'bulan_ini') {
+            $qStart = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $qEnd = Carbon::now()->endOfMonth()->format('Y-m-d');
+            $periodeLabel = "Bulan Ini (" . Carbon::now()->translatedFormat('F Y') . ")";
+        } elseif ($periode === 'tahun_ini') {
+            $qStart = Carbon::now()->startOfYear()->format('Y-m-d');
+            $qEnd = Carbon::now()->endOfYear()->format('Y-m-d');
+            $periodeLabel = "Tahun Ini (" . Carbon::now()->format('Y') . ")";
+        } elseif ($periode === 'custom' && $start_date && $end_date) {
+            $qStart = $start_date;
+            $qEnd = $end_date;
+            $periodeLabel = Carbon::parse($start_date)->format('d/m/Y') . " s/d " . Carbon::parse($end_date)->format('d/m/Y');
+        }
+
+        // Closure helper untuk mempersingkat filter tanggal di Query Builder
+        $applyDateFilter = function($query, $column) use ($qStart, $qEnd) {
+            if ($qStart && $qEnd) {
+                $query->whereBetween(DB::raw("DATE($column)"), [$qStart, $qEnd]);
+            }
+        };
+
+        // =========================================================================
+        // 2. EKSEKUSI QUERY DATABASE BERDASARKAN KATEGORI (100% SINKRON)
+        // URUTAN: TERLAMA KE TERBARU ('asc')
+        // =========================================================================
+        $data = collect([]);
+        $judulLaporan = "Laporan Custom";
+
+        if ($kategori == 'penjualan') {
+            $judulLaporan = "Laporan Penjualan (Sales Order)";
+            $q = DB::table('penjualan_details as pd')
+                ->join('penjualans as p', 'pd.penjualan_id', '=', 'p.id')
+                ->join('barangs as b', 'pd.barang_id', '=', 'b.id')
+                ->leftJoin('customers as c', 'p.customer_id', '=', 'c.id')
+                ->leftJoin('users as u', 'p.user_id', '=', 'u.id')
+                ->whereIn('p.status_approval', ['disetujui', 'completed']);
+            
+            $applyDateFilter($q, 'p.tanggal_order');
+            $data = $q->select('p.tanggal_order as tanggal', 'p.no_so as nomor', 'c.nama_customer as customer', 'u.name as salesman', 'b.merek', 'b.nama_barang as barang', 'pd.jumlah as qty', 'pd.subtotal as nominal', 'p.status_approval as keterangan')->orderBy('p.tanggal_order', 'asc')->get();
+
+        } elseif ($kategori == 'pembelian') {
+            $judulLaporan = "Laporan Pembelian (Purchase Order)";
+            $q = DB::table('pembelians as p')->join('barangs as b', 'p.barang_id', '=', 'b.id');
+            
+            $applyDateFilter($q, 'p.tanggal_beli');
+            $data = $q->select('p.tanggal_beli as tanggal', 'p.no_pembelian as nomor', 'p.nama_supplier as supplier', 'b.merek', 'b.nama_barang as barang', 'p.jumlah_beli as qty', 'p.total_bayar as nominal', 'p.status_barang as keterangan')->orderBy('p.tanggal_beli', 'asc')->get();
+
+        } elseif ($kategori == 'piutang') {
+            $judulLaporan = "Laporan Keuangan (Piutang Customer)";
+            $q = DB::table('piutangs as pt')
+                ->join('penjualans as p', 'pt.penjualan_id', '=', 'p.id')
+                ->leftJoin('customers as c', 'p.customer_id', '=', 'c.id');
+            
+            $applyDateFilter($q, 'pt.created_at');
+            $data = $q->select('pt.created_at as tanggal', 'p.no_so as nomor', 'c.nama_customer as customer', DB::raw('1 as qty'), 'pt.total_tagihan as nominal', 'pt.status_bayar as keterangan', DB::raw('(pt.total_tagihan - pt.total_dibayar) as sisa'))->orderBy('pt.created_at', 'asc')->get();
+
+        } elseif ($kategori == 'utang') {
+            $judulLaporan = "Laporan Keuangan (Utang Supplier)";
+            $q = DB::table('utangs as ut')->join('pembelians as p', 'ut.pembelian_id', '=', 'p.id');
+            
+            $applyDateFilter($q, 'ut.created_at');
+            $data = $q->select('ut.created_at as tanggal', 'p.no_pembelian as nomor', 'p.nama_supplier as supplier', DB::raw('1 as qty'), 'ut.total_utang as nominal', 'ut.status_bayar as keterangan', DB::raw('(ut.total_utang - ut.potongan_dn - ut.total_dibayar) as sisa'))->orderBy('ut.created_at', 'asc')->get();
+
+        } elseif ($kategori == 'cn') {
+            $judulLaporan = "Laporan Credit Note (Potongan Piutang)";
+            $q = DB::table('credit_notes as cn')
+                ->join('penjualans as p', 'cn.referensi_id', '=', 'p.id')
+                ->leftJoin('customers as c', 'p.customer_id', '=', 'c.id')
+                ->where('cn.tipe', 'penjualan');
+            
+            $applyDateFilter($q, 'cn.created_at');
+            $data = $q->select('cn.created_at as tanggal', 'cn.nomor_cn as nomor', 'c.nama_customer as customer', DB::raw('1 as qty'), 'cn.nominal', 'cn.keterangan')->orderBy('cn.created_at', 'asc')->get();
+
+        } elseif ($kategori == 'dn') {
+            $judulLaporan = "Laporan Debit Note (Potongan Utang)";
+            $q = DB::table('credit_notes as dn')
+                ->join('pembelians as p', 'dn.referensi_id', '=', 'p.id')
+                ->where('dn.tipe', 'pembelian');
+            
+            $applyDateFilter($q, 'dn.created_at');
+            $data = $q->select('dn.created_at as tanggal', 'dn.nomor_cn as nomor', 'p.nama_supplier as supplier', DB::raw('1 as qty'), 'dn.nominal', 'dn.keterangan')->orderBy('dn.created_at', 'asc')->get();
+
+        } elseif ($kategori == 'retur_jual') {
+            $judulLaporan = "Laporan Retur Penjualan (Dari Customer)";
+            $q = DB::table('returs as r')
+                ->join('penjualans as p', 'r.referensi_id', '=', 'p.id')
+                ->join('barangs as b', 'r.barang_id', '=', 'b.id')
+                ->leftJoin('customers as c', 'p.customer_id', '=', 'c.id')
+                ->where('r.tipe', 'penjualan');
+            
+            $applyDateFilter($q, 'r.created_at');
+            $data = $q->select('r.created_at as tanggal', 'r.no_retur as nomor', 'c.nama_customer as customer', 'b.merek', 'b.nama_barang as barang', 'r.qty', 'r.nominal_potongan as nominal', 'r.kondisi as keterangan')->orderBy('r.created_at', 'asc')->get();
+
+        } elseif ($kategori == 'retur_beli') {
+            $judulLaporan = "Laporan Retur Pembelian (Ke Supplier)";
+            $q = DB::table('returs as r')
+                ->join('pembelians as p', 'r.referensi_id', '=', 'p.id')
+                ->join('barangs as b', 'r.barang_id', '=', 'b.id')
+                ->where('r.tipe', 'pembelian');
+            
+            $applyDateFilter($q, 'r.created_at');
+            $data = $q->select('r.created_at as tanggal', 'r.no_retur as nomor', 'p.nama_supplier as supplier', 'b.merek', 'b.nama_barang as barang', 'r.qty', 'r.nominal_potongan as nominal', 'r.kondisi as keterangan')->orderBy('r.created_at', 'asc')->get();
+
+        } elseif ($kategori == 'backorder') {
+            $judulLaporan = "Laporan Antrian Backorder";
+            $q = DB::table('back_orders as bo')
+                ->join('penjualans as p', 'bo.penjualan_id', '=', 'p.id')
+                ->join('barangs as b', 'bo.barang_id', '=', 'b.id')
+                ->leftJoin('customers as c', 'p.customer_id', '=', 'c.id');
+            
+            $applyDateFilter($q, 'bo.created_at');
+            $data = $q->select('bo.created_at as tanggal', 'p.no_so as nomor', 'c.nama_customer as customer', 'b.merek', 'b.nama_barang as barang', 'bo.jumlah_kurang as qty', DB::raw('0 as nominal'), 'bo.status_bo as keterangan')->orderBy('bo.created_at', 'asc')->get();
+        }
+
+        // =========================================================================
+        // 3. PROSES STRUKTUR PENGELOMPOKAN DATA (SMART REPORT GROUPING)
+        // =========================================================================
+        $groupedData = collect([]);
+        if (empty($groupBy)) {
+            $groupedData = $data->groupBy(function() { return 'Semua Data'; });
+        } else {
+            $groupedData = $data->groupBy(function($item) use ($groupBy) {
+                $keys = [];
+                foreach ($groupBy as $g) {
+                    $val = $item->{$g} ?? 'Tidak Ada';
+                    $label = ucwords(str_replace('_', ' ', $g)); 
+                    $keys[] = $label . ' : ' . $val;
+                }
+                return implode('  |  ', $keys); 
+            });
+        }
+
+        // =========================================================================
+        // 4. GENERATE DAN LOGIKA OUTPUT DOKUMEN (EXCEL REAL VS VIEW PRINT)
+        // =========================================================================
+        $user = Auth::user();
+
+        // JIKA USER MEMILIH FORMAT EXCEL
+        if ($format === 'excel') {
+            $fileName = str_replace(' ', '_', $judulLaporan) . '_' . time() . '.xlsx';
+            
+            // Memanggil Generator Maatwebsite Excel resmi (.xlsx asli)
+            return Excel::download(
+                new LaporanExport($groupedData, $judulLaporan, $periodeLabel, $kategori), 
+                $fileName
+            );
+        }
+
+        // JIKA USER MEMILIH FORMAT PDF / PRINT VIEW
+        return view('laporan.cetak_kustom', compact('groupedData', 'judulLaporan', 'periodeLabel', 'user', 'kategori', 'groupBy', 'format'));
+    }
+}
+
+
+// ============================================================================
+// FILE: app\Models\Penjualan.php
+// ============================================================================
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Customer;
+use App\Models\User;
+use App\Models\PenjualanDetail;
+
+class Penjualan extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'no_so',
+        'tanggal_order',
+        'customer_id',
+        'user_id',
+        'total_semua',
+        'status_approval',
+        'catatan',
+        'approved_by',
+        'approved_at',
+        'sales_created_at',
+        'sales_created_by',
+        'skor_spk'
+    ];
+
+    protected $casts = [
+        'sales_created_at' => 'datetime',
+        'approved_at' => 'datetime',
+    ];
+
+    public function getSkorPersentaseAttribute()
+    {
+        if ($this->status_approval === 'disetujui') {
+            return 100;
+        }
+        
+        if ($this->status_approval === 'ditolak') {
+            return 0;
+        }
+
+        return 95;
+    }
+
+    public function getPeluangAttribute()
+    {
+        return $this->getSkorPersentaseAttribute(); 
+    }
+
+    public function customer() 
+    { 
+        return $this->belongsTo(Customer::class)->withTrashed(); 
+    }
+
+    public function user() 
+    { 
+        return $this->belongsTo(User::class, 'user_id')->withTrashed(); 
+    }
+
+    public function approver() 
+    { 
+        return $this->belongsTo(User::class, 'approved_by')->withTrashed(); 
+    }
+
+    public function details() 
+    { 
+        return $this->hasMany(PenjualanDetail::class); 
+    }
+
+    public function pengirimans()
+    {
+        return $this->hasMany(Pengiriman::class, 'penjualan_id');
+    }
+}

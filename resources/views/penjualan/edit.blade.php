@@ -13,7 +13,7 @@
         </div>
 
         <div class="card-body p-4">
-            <form action="{{ route('penjualan.update', $penjualan->id) }}" method="POST">
+            <form id="form-edit-so" action="{{ route('penjualan.update', $penjualan->id) }}" method="POST">
                 @csrf
                 @method('PUT')
 
@@ -46,7 +46,7 @@
                             </button>
                         </div>
 
-                        <div class="table-responsive d-none d-lg-block">
+                        <div class="table-responsive d-none d-lg-block" id="desktop-items-container">
                             <table class="table table-borderless align-middle mb-0" style="font-size: 0.85rem;">
                                 <thead>
                                     <tr class="text-dark fw-bold">
@@ -70,7 +70,7 @@
                                         <td>
                                             {{-- FITUR BEBAS HARGA (Tanpa Batas Maksimal) --}}
                                             <input type="number" name="harga_awal[]" class="form-control text-end fw-bold" 
-                                                   value="{{ $detail->harga_awal ?? $detail->barang->harga_jual }}" min="0" required>
+                                                   value="{{ $detail->harga_awal ?: $detail->barang->harga_jual }}" min="0" required>
                                         </td>
                                         <td>
                                             {{-- FITUR BEBAS HARGA (Tanpa Batas Maksimal) --}}
@@ -88,7 +88,7 @@
                         </div>
 
                         {{-- MOBILE CARDS FOR ITEMS --}}
-                        <div class="d-lg-none mt-3">
+                        <div class="d-lg-none mt-3" id="mobile-items-container">
                             @foreach($penjualan->details as $detail)
                             <div class="card mb-3 shadow-sm border-0" style="border-radius: 12px; border: 1px solid #e2e8f0 !important;">
                                 <div class="card-body p-3 bg-light" style="border-radius: 12px;">
@@ -100,7 +100,7 @@
                                         <div class="col-6">
                                             <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem;">Harga Awal</label>
                                             <input type="number" name="harga_awal[]" class="form-control form-control-sm text-end fw-bold" 
-                                                   value="{{ $detail->harga_awal ?? $detail->barang->harga_jual }}" min="0" required>
+                                                   value="{{ $detail->harga_awal ?: $detail->barang->harga_jual }}" min="0" required>
                                         </div>
                                         <div class="col-6">
                                             <label class="small fw-bold text-muted mb-1" style="font-size: 0.7rem;">Harga Akhir</label>
@@ -131,4 +131,23 @@
         </div>
     </div>
 </div>
+<script>
+    document.getElementById('form-edit-so').addEventListener('submit', function(e) {
+        e.preventDefault(); // Pause submission
+
+        const desktopContainer = document.getElementById('desktop-items-container');
+        const mobileContainer = document.getElementById('mobile-items-container');
+        
+        // Check which one is hidden and strip its name attributes so they aren't submitted
+        if (desktopContainer && window.getComputedStyle(desktopContainer).display === 'none') {
+            desktopContainer.querySelectorAll('input, select').forEach(i => i.removeAttribute('name'));
+        }
+        
+        if (mobileContainer && window.getComputedStyle(mobileContainer).display === 'none') {
+            mobileContainer.querySelectorAll('input, select').forEach(i => i.removeAttribute('name'));
+        }
+        
+        this.submit(); // Resume submission
+    });
+</script>
 @endsection

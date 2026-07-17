@@ -15,7 +15,7 @@ class ProfileController extends Controller
 
     public function update(Request $request) {
         $user = User::findOrFail(Auth::id());
-        $request->validate([
+        $request->validateWithBag('profile', [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$user->id,
             'password' => 'nullable|min:8|confirmed',

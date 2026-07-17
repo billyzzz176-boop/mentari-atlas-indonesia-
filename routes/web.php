@@ -17,6 +17,8 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\LabaController;
 use App\Http\Controllers\LaporanController; // Tambahkan LaporanController
 
+use App\Http\Controllers\DataImportController;
+
 // Halaman utama otomatis dialihkan langsung ke halaman login resmi
 Route::get('/', function () {
     return redirect()->route('login');
@@ -34,6 +36,26 @@ Route::get('/run-migration', function () {
         return "<h3>Artisan Migrate Output:</h3><pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre><br><a href='/'>Kembali ke Beranda</a>";
     } catch (\Exception $e) {
         return "<h3>Artisan Migrate Gagal:</h3><pre>" . $e->getMessage() . "</pre>";
+    }
+});
+
+// Rute untuk Generate Dummy Data Khusus Presentasi (Bisa dihapus nanti)
+Route::get('/generate-dummy', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'DummyDataSeeder', '--force' => true]);
+        return "<h3>Sukses! Data Dummy (Palsu) telah berhasil di-generate.</h3><p>Silakan kembali ke <a href='/dashboard'>Dashboard</a> untuk melihat hasilnya.</p>";
+    } catch (\Exception $e) {
+        return "<h3>Gagal:</h3><pre>" . $e->getMessage() . "</pre>";
+    }
+});
+
+// Rute untuk Reset Web (Menghapus semua data dan kembali ke awal)
+Route::get('/reset-web', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
+        return "<h3>Web Berhasil Direset!</h3><p>Semua data transaksi telah dikosongkan. Akun login kembali ke pengaturan awal (direktur@gmail.com, dll).<br>Silakan kembali ke <a href='/login'>Halaman Login</a>.</p>";
+    } catch (\Exception $e) {
+        return "<h3>Gagal Reset Web:</h3><pre>" . $e->getMessage() . "</pre>";
     }
 });
 
@@ -72,6 +94,20 @@ Route::middleware(['auth'])->group(function () {
     // =======================================================================
     Route::get('/penjualan/buat', [PenjualanController::class, 'create'])->name('penjualan.create');
     Route::post('/penjualan', [PenjualanController::class, 'store'])->name('penjualan.store');
+
+    // MANAJEMEN IMPORT DATA MASSAL (Hanya Direktur)
+    Route::middleware(['role:direktur'])->group(function () {
+        Route::get('/import-data', [DataImportController::class, 'index'])->name('import.index');
+        
+        Route::get('/import-data/template-barang', [DataImportController::class, 'downloadTemplateBarang'])->name('import.template.barang');
+        Route::post('/import-data/upload-barang', [DataImportController::class, 'importBarang'])->name('import.upload.barang');
+        
+        Route::get('/import-data/template-customer', [DataImportController::class, 'downloadTemplateCustomer'])->name('import.template.customer');
+        Route::post('/import-data/upload-customer', [DataImportController::class, 'importCustomer'])->name('import.upload.customer');
+        
+        Route::get('/import-data/template-supplier', [DataImportController::class, 'downloadTemplateSupplier'])->name('import.template.supplier');
+        Route::post('/import-data/upload-supplier', [DataImportController::class, 'importSupplier'])->name('import.upload.supplier');
+    });
 
     // MANAJEMEN TINGKATAN & DATA CUSTOMER (Hanya Direktur & Hak Akses khusus - SALES DICABUT)
     Route::middleware(['role:direktur,tingkat_cust'])->group(function () {
@@ -216,4 +252,16 @@ Route::get('/run-migration-indexes', function () {
     } catch (\Exception $e) {
         return '<h1>Gagal!</h1><p>' . $e->getMessage() . '</p>';
     }
+});
+
+Route::get('/generate-static-demo', function() {
+    $user = \App\Models\User::first();
+    auth()->login($user);
+    $dashboardHtml = app()->handle(Illuminate\Http\Request::create('/dashboard', 'GET'))->getContent();
+    auth()->logout();
+    $loginHtml = app()->handle(Illuminate\Http\Request::create('/login', 'GET'))->getContent();
+    
+    file_put_contents(public_path('dashboard-static.html'), $dashboardHtml);
+    file_put_contents(public_path('login-static.html'), $loginHtml);
+    return "Done generating static HTML.";
 });
