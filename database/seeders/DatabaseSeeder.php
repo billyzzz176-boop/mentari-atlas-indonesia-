@@ -29,11 +29,11 @@ class DatabaseSeeder extends Seeder
             'role' => 'sales',
         ]);
 
-        // 3. Akun Warehouse
+        // 3. Akun Warehouse (Gudang)
         User::create([
             'name' => 'Warehouse User',
-            'email' => 'warehouse@gmail.com',
-            'password' => Hash::make('warehouse123'),
+            'email' => 'gudang@gmail.com',
+            'password' => Hash::make('gudang123'),
             'role' => 'admin_warehouse',
         ]);
 
@@ -45,8 +45,12 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin_keuangan',
         ]);
 
-        $this->call([
-            DummyDataSeeder::class,
+        // 5. Akun Manager
+        User::create([
+            'name' => 'Manager User',
+            'email' => 'manager@gmail.com',
+            'password' => Hash::make('manager123'),
+            'role' => 'manager',
         ]);
     }
 }
