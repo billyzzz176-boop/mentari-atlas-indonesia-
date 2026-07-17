@@ -163,7 +163,7 @@ class DummyDataSeeder extends Seeder
             $qty = $faker->numberBetween(10, 50);
             $totalBayar = $qty * $barang->harga_beli;
 
-            \App\Models\Pembelian::create([
+            $pembelian = \App\Models\Pembelian::create([
                 'no_pembelian' => 'PO-' . date('Ymd', $tanggal->getTimestamp()) . '-' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'nama_supplier' => $supplier->nama_supplier,
                 'tanggal_beli' => $tanggal,
@@ -178,16 +178,16 @@ class DummyDataSeeder extends Seeder
 
             $totalDibayar = $faker->randomElement([0, $totalBayar * 0.5, $totalBayar]);
             $statusBayar = 'belum_bayar';
-            if ($totalDibayar > 0 && $totalDibayar < $totalBayar) $statusBayar = 'cicilan'; // periksa ENUM Utang jika error, biasanya 'cicil' atau 'cicilan'
+            if ($totalDibayar > 0 && $totalDibayar < $totalBayar) $statusBayar = 'cicil'; 
             if ($totalDibayar == $totalBayar) $statusBayar = 'lunas';
 
             // Simpan Utang menggunakan DB::table untuk bypass error kolom jika model Utang belum sempurna
             DB::table('utangs')->insert([
-                'no_referensi' => 'PO-' . date('Ymd', $tanggal->getTimestamp()) . '-' . str_pad($i, 3, '0', STR_PAD_LEFT),
-                'nama_supplier' => $supplier->nama_supplier,
+                'no_utang_jurnal' => 'UTG-' . $pembelian->no_pembelian,
+                'pembelian_id' => $pembelian->id,
                 'total_utang' => $totalBayar,
                 'total_dibayar' => $totalDibayar,
-                'status_bayar' => $statusBayar == 'cicilan' ? 'belum_lunas' : $statusBayar, // fallback aman
+                'status_bayar' => $statusBayar,
                 'tanggal_jatuh_tempo' => Carbon::instance($tanggal)->addDays(30),
                 'created_at' => $tanggal,
                 'updated_at' => $tanggal
